@@ -22,18 +22,4 @@ namespace OnlineCinema.DataAccess
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(OnlineCinemaDbContext).Assembly);
         }
     }
-
-    //public class OnlineCinemaDbContextFactory : IDesignTimeDbContextFactory<OnlineCinemaDbContext>
-    //{
-    //    public OnlineCinemaDbContext CreateDbContext(string[] args)
-    //    {
-    //        var optionsBuilder = new DbContextOptionsBuilder<OnlineCinemaDbContext>();
-
-    //        optionsBuilder.UseSqlServer(
-    //            connectionString: "OnlineCinemaDbContext"
-    //        );
-
-    //        return new OnlineCinemaDbContext(optionsBuilder.Options);
-    //    }
-    //}
 }
