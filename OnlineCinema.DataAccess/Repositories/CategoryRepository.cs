@@ -27,16 +27,16 @@ namespace OnlineCinema.DataAccess.Repositories
             return category;
         }
 
-        public async Task<Category> DeleteCategoryAsync(int categoryId)
+        public async Task<bool> DeleteCategoryAsync(int categoryId)
         {
             var category = await _db.Categories.FindAsync(categoryId);
             if (category != null)
             {
                 _db.Categories.Remove(category);
                 await _db.SaveChangesAsync();
-                return category;
+                return true;
             }
-            return new Category();
+            return false;
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int categoryId)

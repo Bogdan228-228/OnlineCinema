@@ -6,8 +6,8 @@ namespace OnlineCinema.Domain.Abstractions.Repositories
     {
         Task<Actor> AddActorAsync(Actor actor);
         Task<Actor> EditActorAsync(Actor actor);
-        Task<Actor> DeleteActorAsync(int actorId);
-        Task<Actor?> GetActorByIdAsync(int actorId);
+        Task<bool> DeleteActorAsync(Guid actorId);
+        Task<Actor?> GetActorByIdAsync(Guid actorId);
         Task<List<Actor>> GetAllActorsAsync();
         Task<List<Actor>> GetActorsByFullNameAsync(string name);
     }

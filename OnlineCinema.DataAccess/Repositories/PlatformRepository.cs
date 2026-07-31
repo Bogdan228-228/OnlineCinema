@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OnlineCinema.Domain.Abstractions;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Models;
 
@@ -28,16 +27,16 @@ namespace OnlineCinema.DataAccess.Repositories
             return platform;
         }
 
-        public async Task<Platform> DeletePlatformAsync(int platformId)
+        public async Task<bool> DeletePlatformAsync(int platformId)
         {
             var platform = await _db.Platforms.FindAsync(platformId);
             if (platform != null)
             {
                 _db.Platforms.Remove(platform);
                 await _db.SaveChangesAsync();
-                return platform;
+                return true;
             }
-            return new Platform();
+            return false;
         }
 
         public async Task<Platform?> GetPlatformByIdAsync(int id)

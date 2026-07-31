@@ -6,9 +6,9 @@ namespace OnlineCinema.Domain.Abstractions.Repositories
     {
         Task<AudioTrack> AddAudioTrackAsync(AudioTrack audioTrack);
         Task<AudioTrack> EditAudioTrackAsync(AudioTrack audioTrack);
-        Task<AudioTrack> DeleteAudioTrackAsync(int audioTrackId);
+        Task<bool> DeleteAudioTrackAsync(int audioTrackId);
         Task<AudioTrack?> GetAudioTrackByIdAsync(int audioTrackId);
         Task<List<AudioTrack>> GetAllAudioTracksAsync();
-        Task<AudioTrack?> GetAudioTracksByLanguageIdAsync(string language);
+        Task<AudioTrack?> GetAudioTracksByLanguageAsync(string language);
     }
 }

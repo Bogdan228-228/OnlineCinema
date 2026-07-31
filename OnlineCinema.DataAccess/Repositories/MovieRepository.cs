@@ -27,16 +27,16 @@ namespace OnlineCinema.DataAccess.Repositories
             return movie;
         }
 
-        public async Task<Movie> DeleteMovieAsync(int movieId)
+        public async Task<bool> DeleteMovieAsync(Guid movieId)
         {
             var movie = await _db.Movies.FindAsync(movieId);
             if (movie != null)
             {
                 _db.Movies.Remove(movie);
                 await _db.SaveChangesAsync();
-                return movie;
+                return true;
             }
-            return new Movie();
+            return false;
         }
 
         public async Task<Movie?> GetMovieByIdAsync(Guid movieId)

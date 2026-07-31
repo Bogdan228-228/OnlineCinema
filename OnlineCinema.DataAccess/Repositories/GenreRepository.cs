@@ -27,14 +27,16 @@ namespace OnlineCinema.DataAccess.Repositories
             return genre;
         }
 
-        public async Task DeleteGenreAsync(int genreId)
+        public async Task<bool> DeleteGenreAsync(int genreId)
         {
             var genre = await _db.Genres.FindAsync(genreId);
             if (genre != null)
             {
                 _db.Genres.Remove(genre);
                 await _db.SaveChangesAsync();
+                return true;
             }
+            return false;
         }
 
         public async Task<Genre?> GetGenreByIdAsync(int genreId)

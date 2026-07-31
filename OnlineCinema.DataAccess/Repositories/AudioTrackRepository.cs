@@ -27,16 +27,16 @@ namespace OnlineCinema.DataAccess.Repositories
             return audioTrack;
         }
 
-        public async Task<AudioTrack> DeleteAudioTrackAsync(int audioTrackId)
+        public async Task<bool> DeleteAudioTrackAsync(int audioTrackId)
         {
             var audioTrack = await _db.AudioTracks.FindAsync(audioTrackId);
             if (audioTrack != null)
             {
                 _db.AudioTracks.Remove(audioTrack);
                 await _db.SaveChangesAsync();
-                return audioTrack;
+                return true;
             }
-            return new AudioTrack();
+            return false;
         }
 
         public async Task<AudioTrack?> GetAudioTrackByIdAsync(int audioTrackId)
@@ -49,7 +49,7 @@ namespace OnlineCinema.DataAccess.Repositories
             return await _db.AudioTracks.ToListAsync();
         }
 
-        public async Task<AudioTrack?> GetAudioTracksByLanguageIdAsync(string language)
+        public async Task<AudioTrack?> GetAudioTracksByLanguageAsync(string language)
         {
             return await _db.AudioTracks.FirstOrDefaultAsync(at => at.Language == language);
         }

@@ -6,7 +6,7 @@ namespace OnlineCinema.Domain.Abstractions.Repositories
     {
         Task<Category> AddCategoryAsync(Category category);
         Task<Category> EditCategoryAsync(Category category);
-        Task<Category> DeleteCategoryAsync(int categoryId);
+        Task<bool> DeleteCategoryAsync(int categoryId);
         Task<Category?> GetCategoryByIdAsync(int categoryId);
         Task<List<Category>> GetAllCategoriesAsync();
         Task<Category?> GetCategoriesByNameAsync(string name);

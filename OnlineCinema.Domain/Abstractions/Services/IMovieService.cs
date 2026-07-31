@@ -1,12 +1,12 @@
 ﻿using OnlineCinema.Domain.Models;
 
-namespace OnlineCinema.Domain.Abstractions.Repositories
+namespace OnlineCinema.Domain.Abstractions.Services
 {
-    public interface IMovieRepository
+    public interface IMovieService
     {
-        Task<Movie> AddMovieAsync(Movie movie);
+        Task<Movie> AddMovieAsync(string title, int categoryId, decimal review, int recommendedAge, DateOnly dateRealise, TimeSpan duration, string description, string country, string imgUrl = "");
         Task<bool> DeleteMovieAsync(Guid movieId);
-        Task<Movie> EditMovieAsync(Movie movie);
+        Task<Movie?> EditMovieAsync(Guid id, string title, int categoryId, decimal review, int recommendedAge, DateOnly dateRealise, TimeSpan duration, string description, string country, string imgUrl = "");
         Task<List<Movie>> GetAllMoviesAsync();
         Task<Movie?> GetMovieByIdAsync(Guid movieId);
         Task<Movie?> GetMovieByTitleAsync(string title);

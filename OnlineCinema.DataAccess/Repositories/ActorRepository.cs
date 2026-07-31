@@ -27,19 +27,19 @@ namespace OnlineCinema.DataAccess.Repositories
             return actor;
         }
 
-        public async Task<Actor> DeleteActorAsync(int actorId)
+        public async Task<bool> DeleteActorAsync(Guid actorId)
         {
             var actor = await _db.Actors.FindAsync(actorId);
             if (actor != null)
             {
                 _db.Actors.Remove(actor);
                 await _db.SaveChangesAsync();
-                return actor;
+                return true;
             }
-            return new Actor();
+            return false;
         }
 
-        public async Task<Actor?> GetActorByIdAsync(int actorId)
+        public async Task<Actor?> GetActorByIdAsync(Guid actorId)
         {
             return await _db.Actors.FindAsync(actorId);
         }
