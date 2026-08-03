@@ -9,15 +9,15 @@
         public Category Category { get; set; }
         public decimal Review { get; set; }
         public int RecommendedAge { get; set; }
-        public ICollection<Genre> Genres { get; set; }
+        public ICollection<Genre> Genres { get; set; } = new List<Genre>();
         public DateOnly DateRealise { get; set; }
         public TimeSpan Duration { get; set; }
         public int Likes { get; set; } = 0;
         public int Dislikes { get; set; } = 0;
         public string Description { get; set; }
-        public ICollection<Actor> Actors { get; set; }
+        public ICollection<Actor> Actors { get; set; } = new List<Actor>();
         public string Country { get; set; }
-        public ICollection<AudioTrack> AudioTracks { get; set; }
-        public ICollection<Platform> Platforms { get; set; }
+        public ICollection<AudioTrack> AudioTracks { get; set; } = new List<AudioTrack>();
+        public ICollection<Platform> Platforms { get; set; } = new List<Platform>();
     }
 }

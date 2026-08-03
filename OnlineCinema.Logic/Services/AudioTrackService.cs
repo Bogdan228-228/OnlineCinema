@@ -53,9 +53,9 @@ namespace OnlineCinema.Logic.Services
             return await _audioTrackRepository.GetAllAudioTracksAsync();
         }
 
-        public async Task<AudioTrack?> GetAudioTracksByLanguageIdAsync(string language)
+        public async Task<AudioTrack?> GetAudioTrackByLanguageAsync(string language)
         {
-            return await _audioTrackRepository.GetAudioTracksByLanguageAsync(language);
+            return await _audioTrackRepository.GetAudioTrackByLanguageAsync(language);
         }
     }
 }

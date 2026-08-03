@@ -53,9 +53,9 @@ namespace OnlineCinema.Logic.Services
             return await _categoryRepository.GetAllCategoriesAsync();
         }
 
-        public async Task<Category?> GetCategoriesByNameAsync(string name)
+        public async Task<Category?> GetCategoryByNameAsync(string name)
         {
-            return await _categoryRepository.GetCategoriesByNameAsync(name);
+            return await _categoryRepository.GetCategoryByNameAsync(name);
         }
     }
 }

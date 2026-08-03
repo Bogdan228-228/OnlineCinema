@@ -49,7 +49,7 @@ namespace OnlineCinema.DataAccess.Repositories
             return await _db.Categories.ToListAsync();
         }
 
-        public async Task<Category?> GetCategoriesByNameAsync(string name)
+        public async Task<Category?> GetCategoryByNameAsync(string name)
         {
             return await _db.Categories.FirstOrDefaultAsync(c => c.Name == name);
         }

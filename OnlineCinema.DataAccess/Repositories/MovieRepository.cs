@@ -54,11 +54,6 @@ namespace OnlineCinema.DataAccess.Repositories
             return await _db.Movies.FirstOrDefaultAsync(m => m.Title == title);
         }
 
-        public async Task<List<Movie>> SearchMoviesByTitleAsync(string title)
-        {
-            return await _db.Movies.Where(m => m.Title.Contains(title)).ToListAsync();
-        }
-
         public async Task<Movie?> GetMovieWithActorsAsync(Guid movieId)
         {
             return await _db.Movies.Include(m => m.Actors).FirstOrDefaultAsync(m => m.Id == movieId);

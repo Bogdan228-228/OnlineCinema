@@ -103,11 +103,6 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMovieByTitleAsync(title);
         }
 
-        public async Task<List<Movie>> SearchMoviesByTitleAsync(string title)
-        {
-            return await _movieRepository.SearchMoviesByTitleAsync(title);
-        }
-
         public async Task<Movie?> GetMovieWithActorsAsync(Guid movieId)
         {
             return await _movieRepository.GetMovieWithActorsAsync(movieId);

@@ -49,7 +49,7 @@ namespace OnlineCinema.DataAccess.Repositories
             return await _db.AudioTracks.ToListAsync();
         }
 
-        public async Task<AudioTrack?> GetAudioTracksByLanguageAsync(string language)
+        public async Task<AudioTrack?> GetAudioTrackByLanguageAsync(string language)
         {
             return await _db.AudioTracks.FirstOrDefaultAsync(at => at.Language == language);
         }
