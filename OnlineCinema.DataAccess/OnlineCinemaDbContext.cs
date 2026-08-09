@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using OnlineCinema.Domain.Models;
 
 namespace OnlineCinema.DataAccess;
@@ -19,6 +20,12 @@ public class OnlineCinemaDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Actor> Actors { get; set; }
+    public DbSet<AudioTrack> AudioTracks { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Genre> Genres { get; set; }
+    public DbSet<Movie> Movies { get; set; }
+    public DbSet<Platform> Platforms { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -9,6 +9,9 @@ using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
 using System.Text;
+using OnlineCinema.Domain.Abstractions.Repositories;
+using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.DataAccess.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +22,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "OnlineCinema — Users API",
+        Title = "OnlineCinema API",
         Version = "v1",
         Description = "Auth, Users, Favorites, History, Reviews, Subscriptions, Payments"
     });
@@ -31,7 +34,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Встав access-токен (без слова Bearer, воно додається автоматично)"
+        Description = "пїЅпїЅпїЅпїЅпїЅ access-пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Bearer, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)"
     });
 
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -88,6 +91,20 @@ builder.Services
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:AccessSecret"]!))
         };
     });
+
+builder.Services.AddScoped<IActorRepository, ActorRepository>();
+builder.Services.AddScoped<IAudioTrackRepository, AudioTrackRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
+
+builder.Services.AddScoped<IActorService, ActorService>();
+builder.Services.AddScoped<IAudioTrackService, AudioTrackService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IPlatformService, PlatformService>();
 
 var app = builder.Build();
 
