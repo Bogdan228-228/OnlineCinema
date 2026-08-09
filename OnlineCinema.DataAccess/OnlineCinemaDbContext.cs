@@ -1,11 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using OnlineCinema.Domain.Models;
 
-namespace OnlineCinema.DataAccess
+namespace OnlineCinema.DataAccess;
+
+public class OnlineCinemaDbContext : IdentityDbContext<User, Role, Guid>
 {
-    public class OnlineCinemaDbContext : DbContext
+    public OnlineCinemaDbContext(DbContextOptions<OnlineCinemaDbContext> options) : base(options)
     {
-        public OnlineCinemaDbContext(DbContextOptions<OnlineCinemaDbContext> options) : base(options)
-        {
-        }
+    }
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<EmailToken> EmailTokens => Set<EmailToken>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+    public DbSet<History> History => Set<History>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<Payment> Payments => Set<Payment>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(OnlineCinemaDbContext).Assembly);
     }
 }
