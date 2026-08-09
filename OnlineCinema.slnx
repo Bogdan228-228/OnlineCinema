@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="OnlineCinema.API/OnlineCinema.API.csproj" />
+  <Project Path="OnlineCinema.API/OnlineCinema.API.csproj" Id="e7951f99-19d7-46b2-b445-a5de6c6f43f7" />
   <Project Path="OnlineCinema.DataAccess/OnlineCinema.DataAccess.csproj" />
   <Project Path="OnlineCinema.Domain/OnlineCinema.Domain.csproj" />
   <Project Path="OnlineCinema.Logic/OnlineCinema.Logic.csproj" />
