@@ -2,16 +2,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OnlineCinema.API.Middleware;
 using OnlineCinema.DataAccess;
+using OnlineCinema.DataAccess.Repositories;
 using OnlineCinema.DataAccess.Security;
+using OnlineCinema.Domain.Abstractions.Repositories;
+using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
 using System.Text;
-using OnlineCinema.Domain.Abstractions.Repositories;
-using OnlineCinema.Domain.Abstractions.Services;
-using OnlineCinema.DataAccess.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,31 +21,31 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "OnlineCinema API",
         Version = "v1",
         Description = "Auth, Users, Favorites, History, Reviews, Subscriptions, Payments"
     });
 
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "����� access-����� (��� ����� Bearer, ���� �������� �����������)"
+        In = ParameterLocation.Header,
+        Description = "Введіть access-токен (тип Bearer, без слова Bearer у самому токені)"
     });
 
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
