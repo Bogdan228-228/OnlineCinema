@@ -109,6 +109,8 @@ builder.Services.AddScoped<IPlatformService, PlatformService>();
 
 var app = builder.Build();
 
+await SeedAdmin.SeedAdminAsync(app);
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())

@@ -10,42 +10,52 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OnlineCinema.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace OnlineCinema.DataAccess.Security;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly IConfiguration _configuration;
+    private readonly UserManager<User> _userManager;
 
-    public JwtTokenGenerator(IConfiguration configuration)
+    public JwtTokenGenerator(IConfiguration configuration, UserManager<User> userManager)
     {
         _configuration = configuration;
+        _userManager = userManager;
     }
 
-    public string GenerateAccessToken(User user)
+    public async Task<string> GenerateAccessToken(User user)
     {
         var secret = _configuration["Jwt:AccessSecret"]!;
         var expiresInMinutes = int.Parse(_configuration["Jwt:AccessExpiresInMinutes"]!);
 
-        return GenerateToken(user, secret, TimeSpan.FromMinutes(expiresInMinutes));
+        return await GenerateToken(user, secret, TimeSpan.FromMinutes(expiresInMinutes));
     }
 
-    public string GenerateRefreshToken(User user)
+    public async Task<string> GenerateRefreshToken(User user)
     {
         var secret = _configuration["Jwt:RefreshSecret"]!;
         var expiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);
 
-        return GenerateToken(user, secret, TimeSpan.FromDays(expiresInDays));
+        return await GenerateToken(user, secret, TimeSpan.FromDays(expiresInDays));
     }
 
-    private string GenerateToken(User user, string secret, TimeSpan lifetime)
+    private async Task<string> GenerateToken(User user, string secret, TimeSpan lifetime)
     {
-        var claims = new[]
+        var roles = await _userManager.GetRolesAsync(user);
+        
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

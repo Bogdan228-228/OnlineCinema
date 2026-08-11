@@ -184,8 +184,8 @@ public class AuthService : IAuthService
 
     private async Task<TokenPairResponse> IssueTokenPairAsync(User user, string? userAgent)
     {
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
+        var accessToken = await _jwtTokenGenerator.GenerateAccessToken(user);
+        var refreshToken = await _jwtTokenGenerator.GenerateRefreshToken(user);
 
         var refreshExpiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);
 

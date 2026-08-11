@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 
@@ -15,6 +16,7 @@ namespace OnlineCinema.API.Controllers
             _movieService = movieService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("add")]
         public async Task<IActionResult> AddMovie(CreateMovieRequest request)
         {
@@ -29,6 +31,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> EditMovie(Guid id, EditMovieRequest request)
         {
@@ -44,6 +47,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteMovie(Guid id)
         {

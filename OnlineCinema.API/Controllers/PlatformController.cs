@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 
@@ -15,6 +16,7 @@ namespace OnlineCinema.API.Controllers
             _platformService = platformService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("add")]
         public async Task<IActionResult> AddPlatform(CreatePlatformRequest request)
         {
@@ -31,6 +33,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> EditPlatform(int id, EditPlatformRequest request)
         {
@@ -49,6 +52,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeletePlatform(int id)
         {
