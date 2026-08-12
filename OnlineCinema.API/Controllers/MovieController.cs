@@ -25,22 +25,24 @@ namespace OnlineCinema.API.Controllers
             var movie = await _movieService.AddMovieAsync(
                 request.Title, request.CategoryId, request.Review,
                 request.RecommendedAge, request.DateRealise, request.Duration,
-                request.Description, request.Country, request.ImgUrl
+                request.Description, request.Country, request.ImgUrl,
+                request.GenreIds, request.ActorIds, request.AudioTrackIds, request.PlatformIds
             );
 
             return Ok(MapMovie(movie));
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPut("edit/{id}")]
+        [HttpPatch("edit/{id}")]
         public async Task<IActionResult> EditMovie(Guid id, EditMovieRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var movie = await _movieService.EditMovieAsync(
-                id, request.Title, request.CategoryId, request.Review,
-                request.RecommendedAge, request.DateRealise, request.Duration,
-                request.Description, request.Country, request.ImgUrl
+                id, request?.Title, request?.CategoryId, request?.Review,
+                request?.RecommendedAge, request?.DateRealise, request?.Duration,
+                request?.Likes, request?.Dislikes, request?.Description, request?.Country,
+                request?.ImgUrl, request?.GenreIds, request?.ActorIds, request?.AudioTrackIds, request?.PlatformIds
             );
 
             if (movie == null) return NotFound(new { message = "Movie not found" });
@@ -121,12 +123,12 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
-        [HttpGet("with-actors/{id}")]
-        public async Task<IActionResult> GetMovieWithActors(Guid id)
+        [HttpGet("by-actor/{id}")]
+        public async Task<IActionResult> GetMoviesByActor(Guid id)
         {
-            var movie = await _movieService.GetMovieWithActorsAsync(id);
-            if (movie == null) return NotFound(new { message = "Movie not found" });
-            return Ok(MapMovie(movie));
+            var movies = await _movieService.GetMoviesByActorAsync(id);
+            if (movies == null || !movies.Any()) return NotFound(new { message = "Movie not found" });
+            return Ok(movies.Select(MapMovie));
         }
 
         private MovieResponse MapMovie(Domain.Models.Movie movie)

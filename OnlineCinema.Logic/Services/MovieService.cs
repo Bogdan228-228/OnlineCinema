@@ -22,7 +22,11 @@ namespace OnlineCinema.Logic.Services
             TimeSpan duration,
             string description,
             string country,
-            string imgUrl = "")
+            string imgUrl = "",
+            List<int>? genreIds = null,
+            List<Guid>? actorIds = null,
+            List<int>? audioTrackIds = null,
+            List<int>? platformIds = null)
         {
             var movie = new Movie
             {
@@ -37,45 +41,48 @@ namespace OnlineCinema.Logic.Services
                 Country = country,
                 ImgUrl = imgUrl,
                 Likes = 0,
-                Dislikes = 0,
-                Genres = new List<Genre>(),
-                Actors = new List<Actor>(),
-                AudioTracks = new List<AudioTrack>(),
-                Platforms = new List<Platform>()
+                Dislikes = 0
             };
 
-            return await _movieRepository.AddMovieAsync(movie);
+            return await _movieRepository.AddMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
         }
 
 
         public async Task<Movie?> EditMovieAsync(
             Guid id,
-            string title,
-            int categoryId,
-            decimal review,
-            int recommendedAge,
-            DateOnly dateRealise,
-            TimeSpan duration,
-            string description,
-            string country,
-            string imgUrl = "")
+            string? title,
+            int? categoryId,
+            decimal? review,
+            int? recommendedAge,
+            DateOnly? dateRealise,
+            TimeSpan? duration,
+            int? likes,
+            int? dislikes,
+            string? description,
+            string? country,
+            string? imgUrl = null,
+            List<int>? genreIds = null,
+            List<Guid>? actorIds = null,
+            List<int>? audioTrackIds = null,
+            List<int>? platformIds = null)
         {
             var movie = await _movieRepository.GetMovieByIdAsync(id);
-
             if (movie == null)
                 return null;
 
-            movie.Title = title;
-            movie.CategoryId = categoryId;
-            movie.Review = review;
-            movie.RecommendedAge = recommendedAge;
-            movie.DateRealise = dateRealise;
-            movie.Duration = duration;
-            movie.Description = description;
-            movie.Country = country;
-            movie.ImgUrl = imgUrl;
+            if (title != null) movie.Title = title;
+            if (categoryId.HasValue) movie.CategoryId = categoryId.Value;
+            if (review.HasValue) movie.Review = review.Value;
+            if (recommendedAge.HasValue) movie.RecommendedAge = recommendedAge.Value;
+            if (dateRealise.HasValue) movie.DateRealise = dateRealise.Value;
+            if (duration.HasValue) movie.Duration = duration.Value;
+            if (likes.HasValue) movie.Likes = likes.Value;
+            if (dislikes.HasValue) movie.Dislikes = dislikes.Value;
+            if (description != null) movie.Description = description;
+            if (country != null) movie.Country = country;
+            if (imgUrl != null) movie.ImgUrl = imgUrl;
 
-            return await _movieRepository.EditMovieAsync(movie);
+            return await _movieRepository.EditMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
         }
 
         public async Task<bool> DeleteMovieAsync(Guid movieId)
@@ -103,9 +110,9 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMovieByTitleAsync(title);
         }
 
-        public async Task<Movie?> GetMovieWithActorsAsync(Guid movieId)
+        public async Task<List<Movie>> GetMoviesByActorAsync(Guid actorId)
         {
-            return await _movieRepository.GetMovieWithActorsAsync(movieId);
+            return await _movieRepository.GetMoviesByActorAsync(actorId);
         }
 
         public async Task<List<Movie>> GetMoviesByCategoryAsync(int categoryId)
