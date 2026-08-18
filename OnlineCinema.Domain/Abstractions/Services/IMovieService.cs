@@ -17,5 +17,9 @@ namespace OnlineCinema.Domain.Abstractions.Services
         Task<List<Movie>> GetMoviesByRatingAsync(decimal minRating);
         Task<List<Movie>> GetMoviesByYearAsync(int year);
         Task<List<Movie>> GetMoviesByActorAsync(Guid actorId);
+        Task<Movie?> LikeMovieAsync(Guid userId, Guid movieId);
+        Task<Movie?> DislikeMovieAsync(Guid userId, Guid movieId);
+        Task<Movie?> RemoveLikeAsync(Guid userId, Guid movieId);
+        Task<Movie?> RemoveDislikeAsync(Guid userId, Guid movieId);
     }
 }

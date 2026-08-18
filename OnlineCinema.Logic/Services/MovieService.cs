@@ -1,5 +1,6 @@
 ﻿using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
 
 namespace OnlineCinema.Logic.Services
@@ -7,10 +8,12 @@ namespace OnlineCinema.Logic.Services
     public class MovieService : IMovieService
     {
         private readonly IMovieRepository _movieRepository;
+        private readonly IUserActivityRepository _userActivityRepository;
 
-        public MovieService(IMovieRepository movieRepository)
+        public MovieService(IMovieRepository movieRepository, IUserActivityRepository userActivityRepository)
         {
             _movieRepository = movieRepository;
+            _userActivityRepository = userActivityRepository;
         }
 
         public async Task<Movie> AddMovieAsync(
@@ -83,6 +86,102 @@ namespace OnlineCinema.Logic.Services
             if (imgUrl != null) movie.ImgUrl = imgUrl;
 
             return await _movieRepository.EditMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
+        }
+
+        public async Task<Movie?> LikeMovieAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var hasLike = await _userActivityRepository.Exists(userId, movieId, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId, ActionType.Dislike);
+
+            if (hasLike) return movie;
+            if (hasDislike)
+            {
+                if (movie.Dislikes > 0) movie.Dislikes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Dislike);
+            }
+
+            movie.Likes++;
+            await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            await _userActivityRepository.AddUserActivity(new UserActivity
+            {
+                UserId = userId,
+                MovieId = movieId,
+                ActionType = ActionType.Like,
+                Timestamp = DateTime.UtcNow
+            });
+
+            return movie;
+        }
+
+        public async Task<Movie?> RemoveLikeAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Like))
+                .FirstOrDefault(a => a.MovieId == movieId);
+
+            if (activity != null)
+            {
+                if (movie.Likes > 0) movie.Likes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Like);
+            }
+
+            return movie;
+        }
+
+        public async Task<Movie?> DislikeMovieAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var hasLike = await _userActivityRepository.Exists(userId, movieId, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId, ActionType.Dislike);
+
+            if (hasDislike) return movie;
+            if (hasLike)
+            {
+                if (movie.Likes > 0) movie.Likes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Like);
+            }
+
+            movie.Dislikes++;
+            await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            await _userActivityRepository.AddUserActivity(new UserActivity
+            {
+                UserId = userId,
+                MovieId = movieId,
+                ActionType = ActionType.Dislike,
+                Timestamp = DateTime.UtcNow
+            });
+
+            return movie;
+        }
+
+        public async Task<Movie?> RemoveDislikeAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Dislike))
+                .FirstOrDefault(a => a.MovieId == movieId);
+
+            if (activity != null)
+            {
+                if (movie.Dislikes > 0) movie.Dislikes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Dislike);
+            }
+
+            return movie;
         }
 
         public async Task<bool> DeleteMovieAsync(Guid movieId)

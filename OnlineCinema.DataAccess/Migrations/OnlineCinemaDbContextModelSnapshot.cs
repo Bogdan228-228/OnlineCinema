@@ -730,6 +730,37 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.UserActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserActivities");
+                });
+
             modelBuilder.Entity("ActorMovie", b =>
                 {
                     b.HasOne("OnlineCinema.Domain.Models.Actor", null)
@@ -874,14 +905,40 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.UserActivity", b =>
+                {
+                    b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
+                        .WithMany("UserActivities")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineCinema.Domain.Models.User", "User")
+                        .WithMany("UserActivities")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.Category", b =>
                 {
                     b.Navigation("Movies");
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.Movie", b =>
+                {
+                    b.Navigation("UserActivities");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserActivities");
                 });
 #pragma warning restore 612, 618
         }

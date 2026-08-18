@@ -19,5 +19,6 @@
         public string Country { get; set; }
         public ICollection<AudioTrack> AudioTracks { get; set; } = new List<AudioTrack>();
         public ICollection<Platform> Platforms { get; set; } = new List<Platform>();
+        public ICollection<UserActivity> UserActivities { get; set; } = new List<UserActivity>();
     }
 }
