@@ -24,6 +24,7 @@ namespace OnlineCinema.DataAccess.Configurations
             builder.Property(m => m.Country).IsRequired().HasMaxLength(100);
             builder.HasMany(m => m.AudioTracks).WithMany(a => a.Movies);
             builder.HasMany(m => m.Platforms).WithMany(p => p.Movies);
+            builder.HasMany(m => m.UserActivities).WithOne(ua => ua.Movie).HasForeignKey(ua => ua.MovieId).OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

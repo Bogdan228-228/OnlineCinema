@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -10,10 +11,12 @@ namespace OnlineCinema.API.Controllers
     public class MovieController : ControllerBase
     {
         private readonly IMovieService _movieService;
+        private readonly IUserActivityService _userActivityService;
 
-        public MovieController(IMovieService movieService)
+        public MovieController(IMovieService movieService, IUserActivityService userActivityService)
         {
             _movieService = movieService;
+            _userActivityService = userActivityService;
         }
 
         [Authorize(Roles = "Admin")]
@@ -49,6 +52,52 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize]
+        [HttpPatch("like/{id}")]
+        public async Task<IActionResult> LikeMovie(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var movie = await _movieService.LikeMovieAsync(userId, id);
+            if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            return Ok(movie);
+        }
+
+        [Authorize]
+        [HttpPatch("remove-like/{id}")]
+        public async Task<IActionResult> RemoveLike(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var movie = await _movieService.RemoveLikeAsync(userId, id);
+            if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.DeleteActivityAsync(userId, movie.Id, ActionType.Like);
+            return Ok(movie);
+        }
+
+        [Authorize]
+        [HttpPatch("dislike/{id}")]
+        public async Task<IActionResult> DislikeMovie(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var movie = await _movieService.DislikeMovieAsync(userId, id);
+            if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            return Ok(movie);
+        }
+
+        [Authorize]
+        [HttpPatch("remove-dislike/{id}")]
+        public async Task<IActionResult> RemoveDislike(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var movie = await _movieService.RemoveDislikeAsync(userId, id);
+            if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.DeleteActivityAsync(userId, movie.Id, ActionType.Dislike);
+            return Ok(movie);
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteMovie(Guid id)
@@ -63,6 +112,14 @@ namespace OnlineCinema.API.Controllers
         {
             var movie = await _movieService.GetMovieByIdAsync(id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+                await _userActivityService.AddActivityAsync(userId, movie.Id, ActionType.View);
+            }
+
             return Ok(MapMovie(movie));
         }
 

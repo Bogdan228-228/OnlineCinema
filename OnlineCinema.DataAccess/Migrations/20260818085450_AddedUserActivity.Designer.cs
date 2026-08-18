@@ -12,8 +12,8 @@ using OnlineCinema.DataAccess;
 namespace OnlineCinema.DataAccess.Migrations
 {
     [DbContext(typeof(OnlineCinemaDbContext))]
-    [Migration("20260812144529_EditMovieDurationRealiseDate")]
-    partial class EditMovieDurationRealiseDate
+    [Migration("20260818085450_AddedUserActivity")]
+    partial class AddedUserActivity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -364,8 +364,8 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime>("DateRealise")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("DateRealise")
+                        .HasColumnType("date");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -375,8 +375,8 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.Property<int>("Dislikes")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Duration")
-                        .HasColumnType("integer");
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("interval");
 
                     b.Property<string>("ImgUrl")
                         .IsRequired()
@@ -733,6 +733,37 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.UserActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserActivities");
+                });
+
             modelBuilder.Entity("ActorMovie", b =>
                 {
                     b.HasOne("OnlineCinema.Domain.Models.Actor", null)
@@ -877,14 +908,40 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.UserActivity", b =>
+                {
+                    b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
+                        .WithMany("UserActivities")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineCinema.Domain.Models.User", "User")
+                        .WithMany("UserActivities")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.Category", b =>
                 {
                     b.Navigation("Movies");
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.Movie", b =>
+                {
+                    b.Navigation("UserActivities");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserActivities");
                 });
 #pragma warning restore 612, 618
         }

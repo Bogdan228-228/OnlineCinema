@@ -26,6 +26,7 @@ public class OnlineCinemaDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<Genre> Genres { get; set; }
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Platform> Platforms { get; set; }
+    public DbSet<UserActivity> UserActivities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
