@@ -12,8 +12,8 @@ using OnlineCinema.DataAccess;
 namespace OnlineCinema.DataAccess.Migrations
 {
     [DbContext(typeof(OnlineCinemaDbContext))]
-    [Migration("20260818085450_AddedUserActivity")]
-    partial class AddedUserActivity
+    [Migration("20260821083514_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,6 +245,35 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.Comment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.EmailToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -281,20 +310,20 @@ namespace OnlineCinema.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContentId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "ContentId")
-                        .IsUnique();
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Favorites");
                 });
@@ -875,6 +904,44 @@ namespace OnlineCinema.DataAccess.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OnlineCinema.Domain.Models.Comment", b =>
+                {
+                    b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
+                        .WithMany("Comments")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineCinema.Domain.Models.User", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OnlineCinema.Domain.Models.Favorite", b =>
+                {
+                    b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
+                        .WithMany("Favorites")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineCinema.Domain.Models.User", "User")
+                        .WithMany("Favorites")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineCinema.Domain.Models.Movie", b =>
                 {
                     b.HasOne("OnlineCinema.Domain.Models.Category", "Category")
@@ -934,11 +1001,19 @@ namespace OnlineCinema.DataAccess.Migrations
 
             modelBuilder.Entity("OnlineCinema.Domain.Models.Movie", b =>
                 {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Favorites");
+
                     b.Navigation("UserActivities");
                 });
 
             modelBuilder.Entity("OnlineCinema.Domain.Models.User", b =>
                 {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Favorites");
+
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserActivities");
