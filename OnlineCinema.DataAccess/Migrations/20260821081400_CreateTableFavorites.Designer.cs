@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OnlineCinema.DataAccess;
@@ -11,9 +12,11 @@ using OnlineCinema.DataAccess;
 namespace OnlineCinema.DataAccess.Migrations
 {
     [DbContext(typeof(OnlineCinemaDbContext))]
-    partial class OnlineCinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260821081400_CreateTableFavorites")]
+    partial class CreateTableFavorites
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

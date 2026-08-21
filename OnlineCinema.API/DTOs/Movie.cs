@@ -73,4 +73,10 @@ namespace OnlineCinema.API.DTOs
         List<AudioTrackResponse> AudioTracks,
         List<PlatformResponse> Platforms
     );
+
+    public record ShortMovieResponse(
+        Guid Id,
+        string Title,
+        string ImgUrl
+    );
 }
