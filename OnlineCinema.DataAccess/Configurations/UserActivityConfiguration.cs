@@ -10,7 +10,8 @@ namespace OnlineCinema.DataAccess.Configurations
         {
             builder.HasKey(ua => ua.Id);
             builder.HasOne(ua => ua.User).WithMany(u => u.UserActivities).HasForeignKey(ua => ua.UserId).OnDelete(DeleteBehavior.Cascade);
-            builder.HasOne(ua => ua.Movie).WithMany(m => m.UserActivities).HasForeignKey(ua => ua.MovieId);
+            builder.Property(ua => ua.EntityId);
+            builder.Property(ua => ua.EntityType).IsRequired();
             builder.Property(ua => ua.ActionType).IsRequired();
             builder.Property(ua => ua.Timestamp).IsRequired();
             builder.Property(ua => ua.Metadata).HasMaxLength(1000);

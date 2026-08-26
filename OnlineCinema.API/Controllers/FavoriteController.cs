@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -10,10 +12,18 @@ namespace OnlineCinema.API.Controllers
     public class FavoriteController : ControllerBase
     {
         private readonly IFavoriteService _favoriteService;
+        private readonly IUserActivityService _userActivityService;
 
-        public FavoriteController(IFavoriteService favoriteService)
+        public FavoriteController(IFavoriteService favoriteService, IUserActivityService userActivityService)
         {
             _favoriteService = favoriteService;
+            _userActivityService = userActivityService;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userId);
         }
 
         [Authorize]
@@ -23,6 +33,8 @@ namespace OnlineCinema.API.Controllers
             var favorite = await _favoriteService.AddToFavoritesAsync(request.UserId, request.MovieId);
             if (favorite == null)
                 return BadRequest("Favorite already exists or could not be created.");
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.Id.ToString(), EntityType.Favorite, ActionType.Post, weight: 3.0);
 
             var response = new FavoriteResponse(
                 favorite.Id,
@@ -41,6 +53,8 @@ namespace OnlineCinema.API.Controllers
             if (favorite == null)
                 return NotFound("Favorite not found.");
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.Id.ToString(), EntityType.Favorite, ActionType.Delete, weight: -3.0);
+
             var response = new FavoriteResponse(
                 favorite.Id,
                 favorite.User,
@@ -55,6 +69,8 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetFavoritesByUser(Guid userId)
         {
             var favorites = await _favoriteService.GetFavoritesByUserIdAsync(userId);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), userId.ToString(), EntityType.Favorite, ActionType.Search);
 
             var response = favorites.Select(f => new FavoriteResponse(
                 f.Id,

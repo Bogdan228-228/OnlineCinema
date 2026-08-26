@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -10,10 +12,18 @@ namespace OnlineCinema.API.Controllers
     public class AudioTrackController : ControllerBase
     {
         private readonly IAudioTrackService _audioTrackService;
+        private readonly IUserActivityService _userActivityService;
 
-        public AudioTrackController(IAudioTrackService audioTrackService)
+        public AudioTrackController(IAudioTrackService audioTrackService, IUserActivityService userActivityService)
         {
             _audioTrackService = audioTrackService;
+            _userActivityService = userActivityService;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userId);
         }
 
         [Authorize(Roles = "Admin")]
@@ -24,6 +34,8 @@ namespace OnlineCinema.API.Controllers
                 return BadRequest(ModelState);
 
             var audioTrack = await _audioTrackService.AddAudioTrackAsync(request.Language);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), audioTrack.Id.ToString(), EntityType.AudioTrack, ActionType.Post);
 
             var response = new AudioTrackResponse(
                 audioTrack.Id,
@@ -44,6 +56,8 @@ namespace OnlineCinema.API.Controllers
             if (audioTrack == null)
                 return NotFound(new { message = "Audio track not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), audioTrack.Id.ToString(), EntityType.AudioTrack, ActionType.Put);
+
             var response = new AudioTrackResponse(
                 audioTrack.Id,
                 audioTrack.Language
@@ -60,6 +74,8 @@ namespace OnlineCinema.API.Controllers
             if (!result)
                 return NotFound(new { message = "Audio track not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.AudioTrack, ActionType.Delete);
+
             return Ok(new { message = "Audio track deleted successfully" });
         }
 
@@ -69,6 +85,8 @@ namespace OnlineCinema.API.Controllers
             var audioTrack = await _audioTrackService.GetAudioTrackByIdAsync(id);
             if (audioTrack == null)
                 return NotFound(new { message = "Audio track not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), audioTrack.Id.ToString(), EntityType.AudioTrack, ActionType.View);
 
             var response = new AudioTrackResponse(
                 audioTrack.Id,
@@ -82,6 +100,8 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetAllAudioTracks()
         {
             var audioTracks = await _audioTrackService.GetAllAudioTracksAsync();
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.AudioTrack, ActionType.Search);
 
             var response = audioTracks.Select(at => new AudioTrackResponse(
                 at.Id,
@@ -97,6 +117,8 @@ namespace OnlineCinema.API.Controllers
             var audioTrack = await _audioTrackService.GetAudioTrackByLanguageAsync(language);
             if (audioTrack == null)
                 return NotFound(new { message = "Audio track not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.AudioTrack, ActionType.Search);
 
             var response = new AudioTrackResponse(
                 audioTrack.Id,

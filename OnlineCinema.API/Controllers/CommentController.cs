@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
 using System.Security.Claims;
 
@@ -12,10 +13,12 @@ namespace OnlineCinema.API.Controllers
     public class CommentController : ControllerBase
     {
         private readonly ICommentService _commentService;
+        private readonly IUserActivityService _userActivityService;
 
-        public CommentController(ICommentService commentService)
+        public CommentController(ICommentService commentService, IUserActivityService userActivityService)
         {
             _commentService = commentService;
+            _userActivityService = userActivityService;
         }
 
         private Guid GetCurrentUserId()
@@ -37,6 +40,8 @@ namespace OnlineCinema.API.Controllers
 
             var created = await _commentService.AddCommentAsync(comment);
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), created.Id.ToString(), EntityType.Comment, ActionType.Post, weight: 4.0);
+
             var response = new CommentResponse(
                 created.Id,
                 created.Content,
@@ -49,7 +54,7 @@ namespace OnlineCinema.API.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id:guid}")]
+        [HttpPut("update/{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] CreateCommentRequest request)
         {
             var existing = await _commentService.GetByIdAsync(id);
@@ -62,11 +67,14 @@ namespace OnlineCinema.API.Controllers
             existing.MovieId = request.MovieId;
 
             await _commentService.UpdateComment(existing);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), existing.Id.ToString(), EntityType.Comment, ActionType.Put, weight: -4.0);
+
             return NoContent();
         }
 
         [Authorize]
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("delete/{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var existing = await _commentService.GetByIdAsync(id);
@@ -76,14 +84,19 @@ namespace OnlineCinema.API.Controllers
                 return Forbid();
 
             await _commentService.DeleteCommentAsync(id);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), existing.Id.ToString(), EntityType.Comment, ActionType.Delete);
+
             return NoContent();
         }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("get-by-id/{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var comment = await _commentService.GetByIdAsync(id);
             if (comment == null) return NotFound();
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), comment.Id.ToString(), EntityType.Comment, ActionType.View);
 
             var response = new CommentResponse(
                 comment.Id,
@@ -105,6 +118,8 @@ namespace OnlineCinema.API.Controllers
 
             var comments = await _commentService.GetByUserIdAsync(userId);
 
+            await _userActivityService.AddActivityAsync(currentUserId, "", EntityType.Comment, ActionType.Search);
+
             var response = comments.Select(c => new CommentResponse(
                 c.Id,
                 c.Content,
@@ -120,6 +135,8 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetByMovieId(Guid movieId)
         {
             var comments = await _commentService.GetByMovieIdAsync(movieId);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Comment, ActionType.Search);
 
             var response = comments.Select(c => new CommentResponse(
                 c.Id,
