@@ -5,14 +5,20 @@ using Microsoft.IdentityModel.Tokens;
 using OnlineCinema.API.Middleware;
 using OnlineCinema.DataAccess;
 using OnlineCinema.DataAccess.Security;
+using OnlineCinema.Domain.Constants;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -21,7 +27,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "OnlineCinema API",
         Version = "v1",
-        Description = "Auth, Users, Favorites, History, Reviews, Subscriptions, Payments"
+        Description = "Auth, Users, Roles, Favorites, History, Reviews, Notifications, Subscriptions, Payments"
     });
 
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -68,6 +74,13 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ITokenHasher, TokenHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -92,6 +105,18 @@ builder.Services
     });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new Role { Name = roleName });
+        }
+    }
+}
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

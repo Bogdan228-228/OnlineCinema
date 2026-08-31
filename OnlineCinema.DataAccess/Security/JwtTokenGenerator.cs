@@ -22,12 +22,21 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _configuration = configuration;
     }
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, IEnumerable<string> roles)
     {
         var secret = _configuration["Jwt:AccessSecret"]!;
         var expiresInMinutes = int.Parse(_configuration["Jwt:AccessExpiresInMinutes"]!);
 
-        return GenerateToken(user, secret, TimeSpan.FromMinutes(expiresInMinutes));
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+        return GenerateToken(claims, secret, TimeSpan.FromMinutes(expiresInMinutes));
     }
 
     public string GenerateRefreshToken(User user)
@@ -35,18 +44,17 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         var secret = _configuration["Jwt:RefreshSecret"]!;
         var expiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);
 
-        return GenerateToken(user, secret, TimeSpan.FromDays(expiresInDays));
-    }
-
-    private string GenerateToken(User user, string secret, TimeSpan lifetime)
-    {
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        return GenerateToken(claims, secret, TimeSpan.FromDays(expiresInDays));
+    }
+
+    private string GenerateToken(IEnumerable<Claim> claims, string secret, TimeSpan lifetime)
+    {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
