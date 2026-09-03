@@ -100,4 +100,11 @@ public class UserActivityRepository : IUserActivityRepository
             .Include(ua => ua.User)
             .ToListAsync();
     }
+
+    public async Task<List<UserActivity>> GetMovieActivitiesAsync()
+    {
+        return await _db.UserActivities
+            .Where(a => a.EntityType == EntityType.Movie)
+            .ToListAsync();
+    }
 }

@@ -13,5 +13,6 @@ namespace OnlineCinema.Domain.Abstractions.Repositories
         Task<List<UserActivity>> GetUserActivitiesByUserId(Guid userId);
         Task<List<UserActivity>> GetUserActivitiesByEntity(string entityId, EntityType entityType);
         Task<List<UserActivity>> GetUserActivitiesByAction(Guid userId, ActionType actionType);
+        Task<List<UserActivity>> GetMovieActivitiesAsync();
     }
 }

@@ -223,9 +223,9 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMoviesByCategoryAsync(categoryId);
         }
 
-        public async Task<List<Movie>> GetMoviesByGenreAsync(string genreName)
+        public async Task<List<Movie>> GetMoviesByGenreIdAsync(int genreId)
         {
-            return await _movieRepository.GetMoviesByGenreAsync(genreName);
+            return await _movieRepository.GetMoviesByGenreIdAsync(genreId);
         }
 
         public async Task<List<Movie>> GetMoviesByRatingAsync(decimal minRating)

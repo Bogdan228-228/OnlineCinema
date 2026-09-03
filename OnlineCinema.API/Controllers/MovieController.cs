@@ -177,10 +177,10 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
-        [HttpGet("by-genre")]
-        public async Task<IActionResult> GetMoviesByGenre(string genreName)
+        [HttpGet("by-genre/{genreId}")]
+        public async Task<IActionResult> GetMoviesByGenreId(int genreId)
         {
-            var movies = await _movieService.GetMoviesByGenreAsync(genreName);
+            var movies = await _movieService.GetMoviesByGenreIdAsync(genreId);
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }

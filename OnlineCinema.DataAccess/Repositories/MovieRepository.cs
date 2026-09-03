@@ -142,7 +142,7 @@ namespace OnlineCinema.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Movie>> GetMoviesByGenreAsync(string genreName)
+        public async Task<List<Movie>> GetMoviesByGenreIdAsync(int genreId)
         {
             return await _db.Movies
                 .Include(m => m.Category)
@@ -150,7 +150,7 @@ namespace OnlineCinema.DataAccess.Repositories
                 .Include(m => m.Actors)
                 .Include(m => m.AudioTracks)
                 .Include(m => m.Platforms)
-                .Where(m => m.Genres.Any(g => g.Name.Contains(genreName)))
+                .Where(m => m.Genres.Any(g => g.Id == genreId))
                 .ToListAsync();
         }
 
@@ -199,6 +199,18 @@ namespace OnlineCinema.DataAccess.Repositories
                 .Include(m => m.AudioTracks)
                 .Include(m => m.Platforms)
                 .Where(m => m.Country.Contains(country))
+                .ToListAsync();
+        }
+
+        public async Task<List<Movie>> GetMoviesByActorIdAsync(Guid actorId)
+        {
+            return await _db.Movies
+                .Include(m => m.Category)
+                .Include(m => m.Genres)
+                .Include(m => m.Actors)
+                .Include(m => m.AudioTracks)
+                .Include(m => m.Platforms)
+                .Where(m => m.Actors.Any(a => a.Id == actorId))
                 .ToListAsync();
         }
     }
