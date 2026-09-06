@@ -93,15 +93,15 @@ namespace OnlineCinema.Logic.Services
             var movie = await _movieRepository.GetMovieByIdAsync(movieId);
             if (movie == null) return null;
 
-            var hasLike = await _userActivityRepository.Exists(userId, movieId, ActionType.Like);
-            var hasDislike = await _userActivityRepository.Exists(userId, movieId, ActionType.Dislike);
+            var hasLike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
 
             if (hasLike) return movie;
             if (hasDislike)
             {
                 if (movie.Dislikes > 0) movie.Dislikes--;
                 await _movieRepository.EditMovieAsync(movie, null, null, null, null);
-                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Dislike);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
             }
 
             movie.Likes++;
@@ -110,9 +110,11 @@ namespace OnlineCinema.Logic.Services
             await _userActivityRepository.AddUserActivity(new UserActivity
             {
                 UserId = userId,
-                MovieId = movieId,
+                EntityId = movieId.ToString(),
+                EntityType = EntityType.Movie,
                 ActionType = ActionType.Like,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                Weight = 2.0
             });
 
             return movie;
@@ -124,13 +126,13 @@ namespace OnlineCinema.Logic.Services
             if (movie == null) return null;
 
             var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Like))
-                .FirstOrDefault(a => a.MovieId == movieId);
+                .FirstOrDefault(a => a.EntityId == movieId.ToString() && a.EntityType == EntityType.Movie);
 
             if (activity != null)
             {
                 if (movie.Likes > 0) movie.Likes--;
                 await _movieRepository.EditMovieAsync(movie, null, null, null, null);
-                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Like);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
             }
 
             return movie;
@@ -141,15 +143,15 @@ namespace OnlineCinema.Logic.Services
             var movie = await _movieRepository.GetMovieByIdAsync(movieId);
             if (movie == null) return null;
 
-            var hasLike = await _userActivityRepository.Exists(userId, movieId, ActionType.Like);
-            var hasDislike = await _userActivityRepository.Exists(userId, movieId, ActionType.Dislike);
+            var hasLike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
 
             if (hasDislike) return movie;
             if (hasLike)
             {
                 if (movie.Likes > 0) movie.Likes--;
                 await _movieRepository.EditMovieAsync(movie, null, null, null, null);
-                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Like);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
             }
 
             movie.Dislikes++;
@@ -158,9 +160,11 @@ namespace OnlineCinema.Logic.Services
             await _userActivityRepository.AddUserActivity(new UserActivity
             {
                 UserId = userId,
-                MovieId = movieId,
+                EntityId = movieId.ToString(),
+                EntityType = EntityType.Movie,
                 ActionType = ActionType.Dislike,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                Weight = -1.0
             });
 
             return movie;
@@ -172,13 +176,13 @@ namespace OnlineCinema.Logic.Services
             if (movie == null) return null;
 
             var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Dislike))
-                .FirstOrDefault(a => a.MovieId == movieId);
+                .FirstOrDefault(a => a.EntityId == movieId.ToString() && a.EntityType == EntityType.Movie);
 
             if (activity != null)
             {
                 if (movie.Dislikes > 0) movie.Dislikes--;
                 await _movieRepository.EditMovieAsync(movie, null, null, null, null);
-                await _userActivityRepository.DeleteActivityAsync(userId, movieId, ActionType.Dislike);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
             }
 
             return movie;
@@ -219,9 +223,9 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMoviesByCategoryAsync(categoryId);
         }
 
-        public async Task<List<Movie>> GetMoviesByGenreAsync(string genreName)
+        public async Task<List<Movie>> GetMoviesByGenreIdAsync(int genreId)
         {
-            return await _movieRepository.GetMoviesByGenreAsync(genreName);
+            return await _movieRepository.GetMoviesByGenreIdAsync(genreId);
         }
 
         public async Task<List<Movie>> GetMoviesByRatingAsync(decimal minRating)

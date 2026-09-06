@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -10,10 +12,18 @@ namespace OnlineCinema.API.Controllers
     public class GenreController : ControllerBase
     {
         private readonly IGenreService _genreService;
+        private readonly IUserActivityService _userActivityService;
 
-        public GenreController(IGenreService genreService)
+        public GenreController(IGenreService genreService, IUserActivityService userActivityService)
         {
             _genreService = genreService;
+            _userActivityService = userActivityService;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userId);
         }
 
         [Authorize(Roles = "Admin")]
@@ -24,6 +34,8 @@ namespace OnlineCinema.API.Controllers
                 return BadRequest(ModelState);
 
             var genre = await _genreService.AddGenreAsync(request.Name);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), genre.Id.ToString(), EntityType.Genre, ActionType.Post);
 
             var response = new GenreResponse(
                 genre.Id,
@@ -44,6 +56,8 @@ namespace OnlineCinema.API.Controllers
             if (genre == null)
                 return NotFound(new { message = "Genre not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), genre.Id.ToString(), EntityType.Genre, ActionType.Put);
+
             var response = new GenreResponse(
                 genre.Id,
                 genre.Name
@@ -60,6 +74,8 @@ namespace OnlineCinema.API.Controllers
             if (!result)
                 return NotFound(new { message = "Actor not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Genre, ActionType.Delete);
+
             return Ok(new { message = "Actor deleted successfully" });
         }
 
@@ -69,6 +85,8 @@ namespace OnlineCinema.API.Controllers
             var genre = await _genreService.GetGenreByIdAsync(id);
             if (genre == null)
                 return NotFound(new { message = "Genre not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), genre.Id.ToString(), EntityType.Genre, ActionType.View);
 
             var response = new GenreResponse(
                 genre.Id,
@@ -82,6 +100,8 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetAllGenres()
         {
             var genres = await _genreService.GetAllGenresAsync();
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Genre, ActionType.Search);
 
             var response = genres.Select(g => new GenreResponse(
                 g.Id,
@@ -97,6 +117,8 @@ namespace OnlineCinema.API.Controllers
             var genre = await _genreService.GetGenreByNameAsync(name);
             if (genre == null)
                 return NotFound(new { message = "Genre not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Genre, ActionType.Search);
 
             var response = new GenreResponse(
                 genre.Id,

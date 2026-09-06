@@ -13,7 +13,7 @@ namespace OnlineCinema.Domain.Abstractions.Services
         Task<List<Movie>> GetMoviesByAudioTrackAsync(string language);
         Task<List<Movie>> GetMoviesByCategoryAsync(int categoryId);
         Task<List<Movie>> GetMoviesByCountryAsync(string country);
-        Task<List<Movie>> GetMoviesByGenreAsync(string genreName);
+        Task<List<Movie>> GetMoviesByGenreIdAsync(int genreId);
         Task<List<Movie>> GetMoviesByRatingAsync(decimal minRating);
         Task<List<Movie>> GetMoviesByYearAsync(int year);
         Task<List<Movie>> GetMoviesByActorAsync(Guid actorId);

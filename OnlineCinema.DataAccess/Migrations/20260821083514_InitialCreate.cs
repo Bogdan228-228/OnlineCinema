@@ -112,20 +112,6 @@ namespace OnlineCinema.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Favorites",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContentId = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Favorites", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Genres",
                 columns: table => new
                 {
@@ -471,6 +457,59 @@ namespace OnlineCinema.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Comments",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MovieId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Comments_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Comments_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MovieId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Favorites_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "GenreMovie",
                 columns: table => new
                 {
@@ -514,6 +553,34 @@ namespace OnlineCinema.DataAccess.Migrations
                         name: "FK_MoviePlatform_Platforms_PlatformsId",
                         column: x => x.PlatformsId,
                         principalTable: "Platforms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserActivities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MovieId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ActionType = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Metadata = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserActivities", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserActivities_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserActivities_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -566,10 +633,24 @@ namespace OnlineCinema.DataAccess.Migrations
                 column: "MoviesId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_UserId_ContentId",
+                name: "IX_Comments_MovieId",
+                table: "Comments",
+                column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_UserId",
+                table: "Comments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_MovieId",
                 table: "Favorites",
-                columns: new[] { "UserId", "ContentId" },
-                unique: true);
+                column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_UserId",
+                table: "Favorites",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GenreMovie_MoviesId",
@@ -601,6 +682,16 @@ namespace OnlineCinema.DataAccess.Migrations
                 name: "IX_Subscriptions_PlanId",
                 table: "Subscriptions",
                 column: "PlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserActivities_MovieId",
+                table: "UserActivities",
+                column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserActivities_UserId",
+                table: "UserActivities",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -626,6 +717,9 @@ namespace OnlineCinema.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "AudioTrackMovie");
+
+            migrationBuilder.DropTable(
+                name: "Comments");
 
             migrationBuilder.DropTable(
                 name: "EmailTokens");
@@ -658,6 +752,9 @@ namespace OnlineCinema.DataAccess.Migrations
                 name: "Subscriptions");
 
             migrationBuilder.DropTable(
+                name: "UserActivities");
+
+            migrationBuilder.DropTable(
                 name: "Actors");
 
             migrationBuilder.DropTable(
@@ -670,16 +767,16 @@ namespace OnlineCinema.DataAccess.Migrations
                 name: "Genres");
 
             migrationBuilder.DropTable(
-                name: "Movies");
+                name: "Platforms");
 
             migrationBuilder.DropTable(
-                name: "Platforms");
+                name: "SubscriptionPlans");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "SubscriptionPlans");
+                name: "Movies");
 
             migrationBuilder.DropTable(
                 name: "Categories");

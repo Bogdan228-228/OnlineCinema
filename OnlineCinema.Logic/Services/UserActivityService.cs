@@ -14,15 +14,17 @@ namespace OnlineCinema.Logic.Services
             _userActivityRepository = userActivityRepository;
         }
 
-        public async Task<UserActivity> AddActivityAsync(Guid userId, Guid movieId, ActionType actionType, string? metadata = null)
+        public async Task<UserActivity> AddActivityAsync(Guid userId, string? entityId, EntityType entityType, ActionType actionType, string? metadata = null, double weight = 1.0)
         {
             var activity = new UserActivity
             {
                 UserId = userId,
-                MovieId = movieId,
+                EntityId = entityId?.ToString(),
+                EntityType = entityType,
                 ActionType = actionType,
                 Metadata = metadata,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                Weight = weight
             };
 
             return await _userActivityRepository.AddUserActivity(activity);
@@ -33,14 +35,14 @@ namespace OnlineCinema.Logic.Services
             return await _userActivityRepository.UpdateMetadata(activityId, metadata);
         }
 
-        public async Task<bool> DeleteActivityAsync(Guid userId, Guid movieId, ActionType actionType)
+        public async Task<bool> DeleteActivityAsync(Guid userId, string entityId, EntityType entityType, ActionType actionType)
         {
-            return await _userActivityRepository.DeleteActivityAsync(userId, movieId, actionType);
+            return await _userActivityRepository.DeleteActivityAsync(userId, entityId, entityType, actionType);
         }
 
-        public async Task<bool> ExistsAsync(Guid userId, Guid movieId, ActionType actionType)
+        public async Task<bool> ExistsAsync(Guid userId, string entityId, EntityType entityType, ActionType actionType)
         {
-            return await _userActivityRepository.Exists(userId, movieId, actionType);
+            return await _userActivityRepository.Exists(userId, entityId, entityType, actionType);
         }
 
         public async Task<List<UserActivity>> GetActivitiesByUserAsync(Guid userId)
@@ -48,9 +50,9 @@ namespace OnlineCinema.Logic.Services
             return await _userActivityRepository.GetUserActivitiesByUserId(userId);
         }
 
-        public async Task<List<UserActivity>> GetActivitiesByMovieAsync(Guid movieId)
+        public async Task<List<UserActivity>> GetActivitiesByEntityAsync(string entityId, EntityType entityType)
         {
-            return await _userActivityRepository.GetUserActivitiesByMovieId(movieId);
+            return await _userActivityRepository.GetUserActivitiesByEntity(entityId, entityType);
         }
 
         public async Task<List<UserActivity>> GetActivitiesByActionAsync(Guid userId, ActionType actionType)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -19,6 +20,12 @@ namespace OnlineCinema.API.Controllers
             _userActivityService = userActivityService;
         }
 
+        private Guid GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userId);
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost("add")]
         public async Task<IActionResult> AddMovie(CreateMovieRequest request)
@@ -31,6 +38,8 @@ namespace OnlineCinema.API.Controllers
                 request.Description, request.Country, request.ImgUrl,
                 request.GenreIds, request.ActorIds, request.AudioTrackIds, request.PlatformIds
             );
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Post);
 
             return Ok(MapMovie(movie));
         }
@@ -49,6 +58,9 @@ namespace OnlineCinema.API.Controllers
             );
 
             if (movie == null) return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Put);
+
             return Ok(MapMovie(movie));
         }
 
@@ -71,7 +83,7 @@ namespace OnlineCinema.API.Controllers
             var movie = await _movieService.RemoveLikeAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
-            await _userActivityService.DeleteActivityAsync(userId, movie.Id, ActionType.Like);
+            await _userActivityService.DeleteActivityAsync(userId, movie.Id.ToString(), EntityType.Movie, ActionType.Patch);
             return Ok(movie);
         }
 
@@ -94,7 +106,7 @@ namespace OnlineCinema.API.Controllers
             var movie = await _movieService.RemoveDislikeAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
-            await _userActivityService.DeleteActivityAsync(userId, movie.Id, ActionType.Dislike);
+            await _userActivityService.DeleteActivityAsync(userId, movie.Id.ToString(), EntityType.Movie, ActionType.Patch);
             return Ok(movie);
         }
 
@@ -104,6 +116,7 @@ namespace OnlineCinema.API.Controllers
         {
             var result = await _movieService.DeleteMovieAsync(id);
             if (!result) return NotFound(new { message = "Movie not found" });
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Movie, ActionType.Delete);
             return Ok(new { message = "Movie deleted successfully" });
         }
 
@@ -117,7 +130,7 @@ namespace OnlineCinema.API.Controllers
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 
-                await _userActivityService.AddActivityAsync(userId, movie.Id, ActionType.View);
+                await _userActivityService.AddActivityAsync(userId, movie.Id.ToString(), EntityType.Movie, ActionType.View, weight: 1.0);
             }
 
             return Ok(MapMovie(movie));
@@ -127,6 +140,7 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetAllMovies()
         {
             var movies = await _movieService.GetAllMoviesAsync();
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -135,6 +149,7 @@ namespace OnlineCinema.API.Controllers
         {
             var movie = await _movieService.GetMovieByTitleAsync(title);
             if (movie == null) return NotFound(new { message = "Movie not found" });
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(MapMovie(movie));
         }
 
@@ -142,6 +157,7 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByAudioTrack(string language)
         {
             var movies = await _movieService.GetMoviesByAudioTrackAsync(language);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -149,6 +165,7 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByCategory(int categoryId)
         {
             var movies = await _movieService.GetMoviesByCategoryAsync(categoryId);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -156,13 +173,15 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByCountry(string country)
         {
             var movies = await _movieService.GetMoviesByCountryAsync(country);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
-        [HttpGet("by-genre")]
-        public async Task<IActionResult> GetMoviesByGenre(string genreName)
+        [HttpGet("by-genre/{genreId}")]
+        public async Task<IActionResult> GetMoviesByGenreId(int genreId)
         {
-            var movies = await _movieService.GetMoviesByGenreAsync(genreName);
+            var movies = await _movieService.GetMoviesByGenreIdAsync(genreId);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -170,6 +189,7 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByRating(decimal minRating)
         {
             var movies = await _movieService.GetMoviesByRatingAsync(minRating);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -177,6 +197,7 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByYear(int year)
         {
             var movies = await _movieService.GetMoviesByYearAsync(year);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 
@@ -185,6 +206,7 @@ namespace OnlineCinema.API.Controllers
         {
             var movies = await _movieService.GetMoviesByActorAsync(id);
             if (movies == null || !movies.Any()) return NotFound(new { message = "Movie not found" });
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
 

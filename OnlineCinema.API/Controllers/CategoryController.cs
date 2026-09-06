@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -10,10 +12,18 @@ namespace OnlineCinema.API.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+        private readonly IUserActivityService _userActivityService;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(ICategoryService categoryService, IUserActivityService userActivityService)
         {
             _categoryService = categoryService;
+            _userActivityService = userActivityService;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userId);
         }
 
         [Authorize(Roles = "Admin")]
@@ -24,6 +34,8 @@ namespace OnlineCinema.API.Controllers
                 return BadRequest(ModelState);
 
             var category = await _categoryService.AddCategoryAsync(request.Name);
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), category.Id.ToString(), EntityType.Category, ActionType.Post);
 
             var response = new CategoryResponse(category.Id, category.Name);
 
@@ -41,6 +53,8 @@ namespace OnlineCinema.API.Controllers
             if (category == null)
                 return NotFound(new { message = "Category not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), category.Id.ToString(), EntityType.Category, ActionType.Put);
+
             var response = new CategoryResponse(category.Id, category.Name);
 
             return Ok(response);
@@ -54,6 +68,8 @@ namespace OnlineCinema.API.Controllers
             if (!result)
                 return NotFound(new { message = "Category not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Category, ActionType.Delete);
+
             return Ok(new { message = "Category deleted successfully" });
         }
 
@@ -64,6 +80,8 @@ namespace OnlineCinema.API.Controllers
             if (category == null)
                 return NotFound(new { message = "Category not found" });
 
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), category.Id.ToString(), EntityType.Category, ActionType.View);
+
             var response = new CategoryResponse(category.Id, category.Name);
 
             return Ok(response);
@@ -73,6 +91,8 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetAllCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Category, ActionType.Search);
 
             var response = categories.Select(c => new CategoryResponse(c.Id, c.Name));
 
@@ -85,6 +105,8 @@ namespace OnlineCinema.API.Controllers
             var category = await _categoryService.GetCategoryByNameAsync(name);
             if (category == null)
                 return NotFound(new { message = "Category not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Category, ActionType.Search);
 
             var response = new CategoryResponse(category.Id, category.Name);
 

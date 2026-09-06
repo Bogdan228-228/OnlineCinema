@@ -7,6 +7,11 @@
         Dislike,
         Favorite,
         Comment,
-        Share
+        Share,
+        Post,
+        Put,
+        Patch,
+        Delete,
+        Search
     }
 }
