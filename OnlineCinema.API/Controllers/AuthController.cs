@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.Logic.DTOs.Auth;
 using OnlineCinema.Logic.Interfaces;
 
@@ -37,6 +38,7 @@ public class AuthController : ControllerBase
         return Ok(tokens);
     }
 
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(RefreshTokenRequest request)
     {
