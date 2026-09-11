@@ -3,4 +3,5 @@
   <Project Path="OnlineCinema.DataAccess/OnlineCinema.DataAccess.csproj" />
   <Project Path="OnlineCinema.Domain/OnlineCinema.Domain.csproj" />
   <Project Path="OnlineCinema.Logic/OnlineCinema.Logic.csproj" />
+  <Project Path="OnlineCinema.Tests/OnlineCinema.Tests.csproj" />
 </Solution>
