@@ -7,6 +7,7 @@ using OnlineCinema.API.Middleware;
 using OnlineCinema.DataAccess;
 using OnlineCinema.DataAccess.Repositories;
 using OnlineCinema.DataAccess.Security;
+using OnlineCinema.Domain.Constants;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Models;
@@ -14,12 +15,14 @@ using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
 using OnlineCinema.Logic.Services.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
@@ -33,7 +36,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "OnlineCinema API",
         Version = "v1",
-        Description = "Auth, Users, Favorites, History, Reviews, Subscriptions, Payments"
+        Description = "Auth, Users, Roles, Favorites, History, Reviews, Notifications, Subscriptions, Payments"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -44,6 +47,7 @@ builder.Services.AddSwaggerGen(options =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Description = "Введіть access-токен (тип Bearer, без слова Bearer у самому токені)"
+
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -79,6 +83,14 @@ builder.Services
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ITokenHasher, TokenHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -88,6 +100,7 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -100,6 +113,20 @@ builder.Services
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:AccessSecret"]!))
         };
     });
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new Role { Name = roleName });
+        }
+    }
+}
 
 builder.Services.AddScoped<IActorRepository, ActorRepository>();
 builder.Services.AddScoped<IAudioTrackRepository, AudioTrackRepository>();

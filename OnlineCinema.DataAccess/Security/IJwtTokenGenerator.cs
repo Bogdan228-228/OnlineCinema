@@ -10,6 +10,6 @@ namespace OnlineCinema.DataAccess.Security;
 
 public interface IJwtTokenGenerator
 {
-    Task<string> GenerateAccessToken(User user);
-    Task<string> GenerateRefreshToken(User user);
+    string GenerateAccessToken(User user, IEnumerable<string> roles);
+    string GenerateRefreshToken(User user);
 }
