@@ -59,19 +59,23 @@ namespace OnlineCinema.Logic.Services
                 .ToList();
 
             var recommendedMovies = new List<Movie>();
+
             foreach (var genreId in topGenres)
             {
                 var movies = await _movieRepository.GetMoviesByGenreIdAsync(genreId);
                 recommendedMovies.AddRange(movies);
             }
+
             foreach (var actorId in topActors)
             {
                 var movies = await _movieRepository.GetMoviesByActorAsync(actorId);
                 recommendedMovies.AddRange(movies);
             }
 
+            var excludedIds = likedMovies.Select(m => m.Id).ToHashSet();
+
             return recommendedMovies
-                .Where(m => !movieActivities.Select(ma => ma.MovieId).Contains(m.Id.ToString()))
+                .Where(m => !excludedIds.Contains(m.Id))
                 .GroupBy(m => m.Id)
                 .Select(g => g.First())
                 .OrderByDescending(m => m.DateRealise)
