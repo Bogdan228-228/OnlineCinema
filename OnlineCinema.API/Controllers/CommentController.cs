@@ -23,8 +23,11 @@ namespace OnlineCinema.API.Controllers
 
         private Guid GetCurrentUserId()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.Parse(userId);
+            var userIdString = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userIdString))
+                throw new InvalidOperationException("User ID claim is missing");
+
+            return Guid.Parse(userIdString);
         }
 
         [Authorize]
