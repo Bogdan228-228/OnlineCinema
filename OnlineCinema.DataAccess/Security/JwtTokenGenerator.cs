@@ -42,7 +42,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         return GenerateToken(claims, secret, TimeSpan.FromMinutes(expiresInMinutes));
     }
 
-    public async Task<string> GenerateRefreshToken(User user)
+    string IJwtTokenGenerator.GenerateRefreshToken(User user)
     {
         var secret = _configuration["Jwt:RefreshSecret"]!;
         var expiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);

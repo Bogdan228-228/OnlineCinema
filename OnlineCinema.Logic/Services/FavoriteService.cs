@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using OnlineCinema.DataAccess;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.DTOs.Favorites;
@@ -23,7 +19,7 @@ public class FavoriteService : IFavoriteService
     public async Task<FavoriteResponse> AddAsync(Guid userId, AddFavoriteRequest request)
     {
         var alreadyExists = await _dbContext.Favorites
-            .AnyAsync(f => f.UserId == userId && f.ContentId == request.ContentId);
+            .AnyAsync(f => f.UserId == userId && f.MovieId == Guid.Parse(request.ContentId));
 
         if (alreadyExists)
         {
@@ -33,7 +29,7 @@ public class FavoriteService : IFavoriteService
         var favorite = new Favorite
         {
             UserId = userId,
-            ContentId = request.ContentId
+            MovieId = Guid.Parse(request.ContentId)
         };
 
         _dbContext.Favorites.Add(favorite);
@@ -42,10 +38,10 @@ public class FavoriteService : IFavoriteService
         return MapToResponse(favorite);
     }
 
-    public async Task RemoveAsync(Guid userId, string contentId)
+    public async Task<FavoriteResponse> RemoveAsync(Guid userId, Guid contentId)
     {
         var favorite = await _dbContext.Favorites
-            .FirstOrDefaultAsync(f => f.UserId == userId && f.ContentId == contentId);
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.MovieId == contentId);
 
         if (favorite == null)
         {
@@ -54,6 +50,8 @@ public class FavoriteService : IFavoriteService
 
         _dbContext.Favorites.Remove(favorite);
         await _dbContext.SaveChangesAsync();
+
+        return MapToResponse(favorite);
     }
 
     public async Task<IReadOnlyList<FavoriteResponse>> GetAllAsync(Guid userId)
@@ -66,10 +64,10 @@ public class FavoriteService : IFavoriteService
         return favorites.Select(MapToResponse).ToList();
     }
 
-    public async Task<bool> IsFavoriteAsync(Guid userId, string contentId)
+    public async Task<bool> IsFavoriteAsync(Guid userId, Guid contentId)
     {
         return await _dbContext.Favorites
-            .AnyAsync(f => f.UserId == userId && f.ContentId == contentId);
+            .AnyAsync(f => f.UserId == userId && f.MovieId == contentId);
     }
 
     private static FavoriteResponse MapToResponse(Favorite favorite)
@@ -77,7 +75,7 @@ public class FavoriteService : IFavoriteService
         return new FavoriteResponse
         {
             Id = favorite.Id,
-            ContentId = favorite.ContentId,
+            ContentId = favorite.MovieId,
             CreatedAt = favorite.CreatedAt
         };
     }

@@ -91,6 +91,24 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IActorRepository, ActorRepository>();
+builder.Services.AddScoped<IAudioTrackRepository, AudioTrackRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<IActorService, ActorService>();
+builder.Services.AddScoped<IAudioTrackService, AudioTrackService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IPlatformService, PlatformService>();
+builder.Services.AddScoped<IUserActivityService, UserActivityService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -127,29 +145,6 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
-
-builder.Services.AddScoped<IActorRepository, ActorRepository>();
-builder.Services.AddScoped<IAudioTrackRepository, AudioTrackRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IGenreRepository, GenreRepository>();
-builder.Services.AddScoped<IMovieRepository, MovieRepository>();
-builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
-builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
-builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-
-builder.Services.AddScoped<IActorService, ActorService>();
-builder.Services.AddScoped<IAudioTrackService, AudioTrackService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IGenreService, GenreService>();
-builder.Services.AddScoped<IMovieService, MovieService>();
-builder.Services.AddScoped<IPlatformService, PlatformService>();
-builder.Services.AddScoped<IUserActivityService, UserActivityService>();
-builder.Services.AddScoped<IFavoriteService, FavoriteService>();
-builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IRecommendationService, RecommendationService>();
-
-var app = builder.Build();
 
 await SeedAdmin.SeedAdminAsync(app);
 
