@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineCinema.Logic.DTOs.Auth;
+namespace OnlineCinema.Logic.DTOs.Users;
 
-public class LoginRequest
+public class ChangePasswordRequest
 {
     [Required]
-    [EmailAddress]
-    public string Email { get; set; } = null!;
+    public string OldPassword { get; set; } = null!;
 
     [Required]
-    public string Password { get; set; } = null!;
+    [MinLength(8)]
+    public string NewPassword { get; set; } = null!;
 }
