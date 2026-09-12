@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using OnlineCinema.DataAccess;
 using OnlineCinema.DataAccess.Security;
-using OnlineCinema.Domain.Constants;
 using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.DTOs.Auth;
@@ -61,8 +60,6 @@ public class AuthService : IAuthService
             var errors = string.Join("; ", result.Errors.Select(e => e.Description));
             throw new ConflictException(errors);
         }
-
-        await _userManager.AddToRoleAsync(user, RoleNames.User);
 
         await CreateEmailTokenAsync(user.Id, TokenType.Confirmation);
 
@@ -187,10 +184,8 @@ public class AuthService : IAuthService
 
     private async Task<TokenPairResponse> IssueTokenPairAsync(User user, string? userAgent)
     {
-        var roles = await _userManager.GetRolesAsync(user);
-
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user, roles);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
+        var accessToken = await _jwtTokenGenerator.GenerateAccessToken(user);
+        var refreshToken = await _jwtTokenGenerator.GenerateRefreshToken(user);
 
         var refreshExpiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);
 

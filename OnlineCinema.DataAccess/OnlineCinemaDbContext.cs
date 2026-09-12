@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using OnlineCinema.Domain.Models;
 
 namespace OnlineCinema.DataAccess;
@@ -27,7 +28,7 @@ public class OnlineCinemaDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<Platform> Platforms { get; set; }
     public DbSet<UserActivity> UserActivities { get; set; }
     public DbSet<Comment> Comments { get; set; }
-   
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
