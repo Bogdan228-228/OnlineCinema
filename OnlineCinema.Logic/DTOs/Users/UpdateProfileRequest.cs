@@ -5,18 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineCinema.Logic.DTOs.Auth;
+namespace OnlineCinema.Logic.DTOs.Users;
 
-public class RegisterRequest
+public class UpdateProfileRequest
 {
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; } = null!;
-
-    [Required]
-    [MinLength(8)]
-    public string Password { get; set; } = null!;
-
     [StringLength(200)]
     public string? FullName { get; set; }
+
+    [StringLength(500)]
+    public string? AvatarUrl { get; set; }
 }

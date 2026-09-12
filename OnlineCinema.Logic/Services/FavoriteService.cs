@@ -1,47 +1,84 @@
-﻿using OnlineCinema.Domain.Abstractions.Repositories;
-using OnlineCinema.Domain.Abstractions.Services;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using OnlineCinema.DataAccess;
 using OnlineCinema.Domain.Models;
+using OnlineCinema.Logic.DTOs.Favorites;
+using OnlineCinema.Logic.Exceptions;
+using OnlineCinema.Logic.Interfaces;
 
-namespace OnlineCinema.Logic.Services
+namespace OnlineCinema.Logic.Services;
+
+public class FavoriteService : IFavoriteService
 {
-    public class FavoriteService : IFavoriteService
+    private readonly OnlineCinemaDbContext _dbContext;
+
+    public FavoriteService(OnlineCinemaDbContext dbContext)
     {
-        private readonly IFavoriteRepository _favoriteRepository;
+        _dbContext = dbContext;
+    }
 
-        public FavoriteService(IFavoriteRepository favoriteRepository)
+    public async Task<FavoriteResponse> AddAsync(Guid userId, AddFavoriteRequest request)
+    {
+        var alreadyExists = await _dbContext.Favorites
+            .AnyAsync(f => f.UserId == userId && f.ContentId == request.ContentId);
+
+        if (alreadyExists)
         {
-            _favoriteRepository = favoriteRepository;
+            throw new ConflictException("Контент вже додано в обране");
         }
 
-        public async Task<Favorite?> AddToFavoritesAsync(Guid userId, Guid movieId)
+        var favorite = new Favorite
         {
-            var exists = await _favoriteRepository.GetFavoritesByUserIdAsync(userId);
-            if (exists.Any(f => f.MovieId == movieId))
-            {
-                return exists.First(f => f.MovieId == movieId);
-            }
+            UserId = userId,
+            ContentId = request.ContentId
+        };
 
-            var favorite = new Favorite
-            {
-                UserId = userId,
-                MovieId = movieId
-            };
+        _dbContext.Favorites.Add(favorite);
+        await _dbContext.SaveChangesAsync();
 
-            return await _favoriteRepository.AddFavoriteAsync(favorite);
+        return MapToResponse(favorite);
+    }
+
+    public async Task RemoveAsync(Guid userId, string contentId)
+    {
+        var favorite = await _dbContext.Favorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.ContentId == contentId);
+
+        if (favorite == null)
+        {
+            throw new NotFoundException("Запис в обраному не знайдено");
         }
 
-        public async Task<Favorite?> RemoveFromFavoritesAsync(Guid favoriteId)
-        {
-            var favorite = await _favoriteRepository.GetFavoriteByIdAsync(favoriteId);
-            if (favorite == null) return null;
+        _dbContext.Favorites.Remove(favorite);
+        await _dbContext.SaveChangesAsync();
+    }
 
-            await _favoriteRepository.DeleteFavoriteAsync(favoriteId);
-            return favorite;
-        }
+    public async Task<IReadOnlyList<FavoriteResponse>> GetAllAsync(Guid userId)
+    {
+        var favorites = await _dbContext.Favorites
+            .Where(f => f.UserId == userId)
+            .OrderByDescending(f => f.CreatedAt)
+            .ToListAsync();
 
-        public async Task<List<Favorite>> GetFavoritesByUserIdAsync(Guid userId)
+        return favorites.Select(MapToResponse).ToList();
+    }
+
+    public async Task<bool> IsFavoriteAsync(Guid userId, string contentId)
+    {
+        return await _dbContext.Favorites
+            .AnyAsync(f => f.UserId == userId && f.ContentId == contentId);
+    }
+
+    private static FavoriteResponse MapToResponse(Favorite favorite)
+    {
+        return new FavoriteResponse
         {
-            return await _favoriteRepository.GetFavoritesByUserIdAsync(userId);
-        }
+            Id = favorite.Id,
+            ContentId = favorite.ContentId,
+            CreatedAt = favorite.CreatedAt
+        };
     }
 }
