@@ -71,7 +71,8 @@ namespace OnlineCinema.API.DTOs
         List<GenreResponse> Genres,
         List<ActorResponse> Actors,
         List<AudioTrackResponse> AudioTracks,
-        List<PlatformResponse> Platforms
+        List<PlatformResponse> Platforms,
+        string? VideoUrl
     );
 
     public record ShortMovieResponse(

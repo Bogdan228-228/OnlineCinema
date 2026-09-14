@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Enums;
-using System.Security.Claims;
+using OnlineCinema.Domain.Models;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -13,11 +13,15 @@ namespace OnlineCinema.API.Controllers
     {
         private readonly IMovieService _movieService;
         private readonly IUserActivityService _userActivityService;
+        private readonly IMovieUploadService _movieUploadService;
+        private readonly IConfiguration _configuration;
 
-        public MovieController(IMovieService movieService, IUserActivityService userActivityService)
+        public MovieController(IMovieService movieService, IUserActivityService userActivityService, IMovieUploadService movieUploadService, IConfiguration configuration)
         {
             _movieService = movieService;
             _userActivityService = userActivityService;
+            _movieUploadService = movieUploadService;
+            _configuration = configuration;
         }
 
         private Guid GetCurrentUserId()
@@ -66,6 +70,24 @@ namespace OnlineCinema.API.Controllers
 
             return Ok(MapMovie(movie));
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("upload/{id}")]
+        public async Task<IActionResult> UploadMovie(Guid id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не завантажено");
+
+            var movie = await _movieUploadService.UploadAndSliceAsync(id, file);
+
+            if (movie == null)
+                return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Video uploaded");
+
+            return Ok(MapMovie(movie));
+        }
+
 
         [Authorize]
         [HttpPatch("like/{id}")]
@@ -123,18 +145,20 @@ namespace OnlineCinema.API.Controllers
             return Ok(new { message = "Movie deleted successfully" });
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMovieById(Guid id)
         {
             var movie = await _movieService.GetMovieByIdAsync(id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
-            if (User?.Identity?.IsAuthenticated == true)
-            {
-                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.View, weight: 1.0);
 
-                await _userActivityService.AddActivityAsync(userId, movie.Id.ToString(), EntityType.Movie, ActionType.View, weight: 1.0);
-            }
+            var blobConnectionString = _configuration.GetValue<string>("AZURE_STORAGE_CONNECTION_STRING");
+
+            string sasQuery = GenerateSasToken.GetSasUri(blobConnectionString, "private-media");
+
+            movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
 
             return Ok(MapMovie(movie));
         }
@@ -213,7 +237,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
-        private MovieResponse MapMovie(Domain.Models.Movie movie)
+        private MovieResponse MapMovie(Movie movie)
         {
             return new MovieResponse(
                 movie.Id,
@@ -231,7 +255,8 @@ namespace OnlineCinema.API.Controllers
                 movie.Genres.Select(g => new GenreResponse(g.Id, g.Name)).ToList(),
                 movie.Actors.Select(a => new ActorResponse(a.Id, a.FullName, a.Biography)).ToList(),
                 movie.AudioTracks.Select(at => new AudioTrackResponse(at.Id, at.Language)).ToList(),
-                movie.Platforms.Select(p => new PlatformResponse(p.Id, p.Name)).ToList()
+                movie.Platforms.Select(p => new PlatformResponse(p.Id, p.Name)).ToList(),
+                movie?.VideoUrl
             );
         }
     }

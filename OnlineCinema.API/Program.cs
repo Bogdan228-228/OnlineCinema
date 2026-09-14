@@ -1,3 +1,6 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +10,9 @@ using OnlineCinema.API.Middleware;
 using OnlineCinema.DataAccess;
 using OnlineCinema.DataAccess.Repositories;
 using OnlineCinema.DataAccess.Security;
-using OnlineCinema.Domain.Constants;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Constants;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
@@ -67,7 +70,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<OnlineCinemaDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DB_Connection")));
 
 builder.Services
     .AddIdentity<User, Role>(options =>
@@ -109,6 +112,7 @@ builder.Services.AddScoped<IPlatformService, PlatformService>();
 builder.Services.AddScoped<IUserActivityService, UserActivityService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<IMovieUploadService, MovieUploadService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -132,7 +136,26 @@ builder.Services
         };
     });
 
+var blobConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+builder.Services.AddSingleton(new BlobServiceClient(blobConnectionString));
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var blobServiceClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
+    var containerClient = blobServiceClient.GetBlobContainerClient("private-media"); // public-assets // private-media
+    await containerClient.CreateIfNotExistsAsync();
+
+    var prefixes = new HashSet<string>();
+
+    var movieFolders = new HashSet<string>();
+
+    await foreach (var blobItem in containerClient.GetBlobsAsync())
+    {
+        Console.WriteLine(blobItem.Name);
+    }
+}
 
 using (var scope = app.Services.CreateScope())
 {

@@ -4,8 +4,10 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>c6e888f6-a3cc-4eb1-bd13-a97e6c24129a</UserSecretsId>
+		<AssemblyTitle></AssemblyTitle>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.29.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 		<PackageReference Include="Microsoft.OpenApi" Version="1.6.14" />
