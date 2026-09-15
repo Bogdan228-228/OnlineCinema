@@ -1,5 +1,4 @@
 ﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;

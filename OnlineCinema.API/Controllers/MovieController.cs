@@ -192,6 +192,7 @@ namespace OnlineCinema.API.Controllers
             string sasQuery = GenerateSasToken.GetSasUri(blobConnectionString, "private-media");
 
             movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
+            movie.TrailerUrl = $"{movie.TrailerUrl}{sasQuery}";
 
             return Ok(MapMovie(movie));
         }
