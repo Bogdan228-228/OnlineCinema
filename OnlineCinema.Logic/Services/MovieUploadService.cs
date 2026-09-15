@@ -98,6 +98,31 @@ namespace OnlineCinema.Logic.Services
             return movie;
         }
 
+        public async Task<Movie> UploadTrailerAsync(Guid movieId, IFormFile file)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null)
+            {
+                throw new ArgumentException("Movie not found", nameof(movieId));
+            }
+
+            var containerClient = _blobServiceClient.GetBlobContainerClient("private-media");
+            await containerClient.CreateIfNotExistsAsync();
+
+            var blobName = $"trailers/{movieId}/{file.FileName}";
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            using (var stream = file.OpenReadStream())
+            {
+                await blobClient.UploadAsync(stream, overwrite: true);
+            }
+
+            movie.TrailerUrl = blobClient.Uri.ToString();
+            movie = await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            return movie;
+        }
+
         private async Task<TimeSpan> GetVideoDurationAsync(string filePath)
         {
             if (!File.Exists(filePath))

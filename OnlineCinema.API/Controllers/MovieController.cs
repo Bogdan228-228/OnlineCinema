@@ -72,7 +72,7 @@ namespace OnlineCinema.API.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPatch("upload/{id}")]
+        [HttpPatch("upload-video/{id}")]
         public async Task<IActionResult> UploadMovie(Guid id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -102,6 +102,23 @@ namespace OnlineCinema.API.Controllers
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Poster uploaded");
             
+            return Ok(MapMovie(movie));
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("upload-trailer/{id}")]
+        public async Task<IActionResult> UploadTrailer(Guid id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не завантажено");
+
+            var movie = await _movieUploadService.UploadTrailerAsync(id, file);
+
+            if (movie == null)
+                return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Trailer uploaded");
+
             return Ok(MapMovie(movie));
         }
 
@@ -276,7 +293,8 @@ namespace OnlineCinema.API.Controllers
                 movie.Actors.Select(a => new ActorResponse(a.Id, a.FullName, a.Biography)).ToList(),
                 movie.AudioTracks.Select(at => new AudioTrackResponse(at.Id, at.Language)).ToList(),
                 movie.Platforms.Select(p => new PlatformResponse(p.Id, p.Name)).ToList(),
-                movie?.VideoUrl
+                movie?.VideoUrl,
+                movie?.TrailerUrl
             );
         }
     }

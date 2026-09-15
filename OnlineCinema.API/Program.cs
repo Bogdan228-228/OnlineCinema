@@ -144,7 +144,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var blobServiceClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
-    var containerClient = blobServiceClient.GetBlobContainerClient("public-assets"); // public-assets // private-media
+    var containerClient = blobServiceClient.GetBlobContainerClient("private-media"); // public-assets // private-media
     await containerClient.CreateIfNotExistsAsync();
 
     var prefixes = new HashSet<string>();
