@@ -78,7 +78,7 @@ namespace OnlineCinema.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Файл не завантажено");
 
-            var movie = await _movieUploadService.UploadAndSliceAsync(id, file);
+            var movie = await _movieUploadService.UploadAndSliceVideoAsync(id, file);
 
             if (movie == null)
                 return NotFound(new { message = "Movie not found" });
@@ -88,6 +88,22 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("upload-poster/{id}")]
+        public async Task<IActionResult> UploadPoster(Guid id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не завантажено");
+
+            var movie = await _movieUploadService.UploadPosterAsync(id, file);
+
+            if (movie == null)
+                return NotFound(new { message = "Movie not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Poster uploaded");
+            
+            return Ok(MapMovie(movie));
+        }
 
         [Authorize]
         [HttpPatch("like/{id}")]
@@ -163,6 +179,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllMovies()
         {
@@ -171,6 +188,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-title")]
         public async Task<IActionResult> GetMovieByTitle(string title)
         {
@@ -180,6 +198,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(MapMovie(movie));
         }
 
+        [Authorize]
         [HttpGet("by-audio")]
         public async Task<IActionResult> GetMoviesByAudioTrack(string language)
         {
@@ -188,6 +207,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-category/{categoryId}")]
         public async Task<IActionResult> GetMoviesByCategory(int categoryId)
         {
@@ -248,7 +268,7 @@ namespace OnlineCinema.API.Controllers
                 movie.Duration,
                 movie.Description,
                 movie.Country,
-                movie.ImgUrl,
+                movie.PosterUrl,
                 movie.Likes,
                 movie.Dislikes,
                 new CategoryResponse(movie.Category.Id, movie.Category.Name),

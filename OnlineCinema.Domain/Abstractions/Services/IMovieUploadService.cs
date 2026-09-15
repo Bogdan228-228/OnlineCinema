@@ -5,6 +5,7 @@ namespace OnlineCinema.Domain.Abstractions.Services
 {
     public interface IMovieUploadService
     {
-        Task<Movie> UploadAndSliceAsync(Guid movieId, IFormFile file);
+        Task<Movie> UploadAndSliceVideoAsync(Guid movieId, IFormFile file);
+        Task<Movie> UploadPosterAsync(Guid movieId, IFormFile file);
     }
 }

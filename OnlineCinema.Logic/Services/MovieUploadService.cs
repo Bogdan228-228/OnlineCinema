@@ -19,7 +19,7 @@ namespace OnlineCinema.Logic.Services
             _movieRepository = movieRepository;
         }
 
-        public async Task<Movie> UploadAndSliceAsync(Guid movieId, IFormFile file)
+        public async Task<Movie> UploadAndSliceVideoAsync(Guid movieId, IFormFile file)
         {
             var movie = await _movieRepository.GetMovieByIdAsync(movieId);
             if (movie == null)
@@ -73,8 +73,36 @@ namespace OnlineCinema.Logic.Services
             return movie;
         }
 
+        public async Task<Movie> UploadPosterAsync(Guid movieId, IFormFile file)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null)
+            {
+                throw new ArgumentException("Movie not found", nameof(movieId));
+            }
+
+            var containerClient = _blobServiceClient.GetBlobContainerClient("public-assets");
+            await containerClient.CreateIfNotExistsAsync();
+
+            var blobName = $"posters/{movie.Id}/{file.FileName}";
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            using (var stream = file.OpenReadStream())
+            {
+                await blobClient.UploadAsync(stream, overwrite: true);
+            }
+
+            movie.PosterUrl = blobClient.Uri.ToString();
+            movie = await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            return movie;
+        }
+
         private async Task<TimeSpan> GetVideoDurationAsync(string filePath)
         {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("Video file not found", filePath);
+
             var ffprobeArgs = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{filePath}\"";
 
             var process = new Process
@@ -90,8 +118,12 @@ namespace OnlineCinema.Logic.Services
             };
 
             process.Start();
-            string output = await process.StandardOutput.ReadToEndAsync();
+            string output = (await process.StandardOutput.ReadToEndAsync()).Trim();
+            string error = await process.StandardError.ReadToEndAsync();
             process.WaitForExit();
+
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException($"ffprobe error: {error}");
 
             if (double.TryParse(output, System.Globalization.CultureInfo.InvariantCulture, out var seconds))
             {
@@ -100,6 +132,5 @@ namespace OnlineCinema.Logic.Services
 
             return TimeSpan.Zero;
         }
-
     }
 }
