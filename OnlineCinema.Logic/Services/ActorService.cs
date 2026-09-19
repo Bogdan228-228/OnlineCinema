@@ -25,7 +25,7 @@ namespace OnlineCinema.Logic.Services
             return await _actorRepository.AddActorAsync(actor);
         }
 
-        public async Task<Actor?> EditActorAsync(Guid actorId, string fullName, string biography)
+        public async Task<Actor?> EditActorAsync(Guid actorId, string fullName, string biography, string? imageUrl)
         {
             var actor = await _actorRepository.GetActorByIdAsync(actorId);
             if (actor == null)
@@ -34,6 +34,8 @@ namespace OnlineCinema.Logic.Services
             }
             actor.FullName = fullName;
             actor.Biography = biography;
+            if (!string.IsNullOrEmpty(imageUrl))
+                actor.ImageUrl = imageUrl;
             return await _actorRepository.EditActorAsync(actor);
         }
 

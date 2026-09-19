@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Enums;
-using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -13,11 +12,13 @@ namespace OnlineCinema.API.Controllers
     {
         private readonly IActorService _actorService;
         private readonly IUserActivityService _userActivityService;
+        private readonly IActorUploadService _actorUploadService;
 
-        public ActorController(IActorService actorService, IUserActivityService userActivityService)
+        public ActorController(IActorService actorService, IUserActivityService userActivityService, IActorUploadService actorUploadService)
         {
             _actorService = actorService;
             _userActivityService = userActivityService;
+            _actorUploadService = actorUploadService;
         }
 
         private Guid GetCurrentUserId()
@@ -50,13 +51,30 @@ namespace OnlineCinema.API.Controllers
         }
 
         [Authorize(Roles = "Admin")]
+        [HttpPatch("upload-actor-image/{id}")]
+        public async Task<IActionResult> UploadActorImage(Guid id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не завантажено");
+
+            var actor = await _actorUploadService.UploadActorImageAsync(id, file);
+
+            if (actor == null)
+                return NotFound(new { message = "Actor not found" });
+
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), actor.Id.ToString(), EntityType.Actor, ActionType.Patch, metadata: "Image uploaded");
+
+            return Ok(actor);
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> EditActor(Guid id, EditActorRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var actor = await _actorService.EditActorAsync(id, request.FullName, request.Biography);
+            var actor = await _actorService.EditActorAsync(id, request.FullName, request.Biography, request.ImageUrl);
             if (actor == null)
                 return NotFound(new { message = "Actor not found" });
 

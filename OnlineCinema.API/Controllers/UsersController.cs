@@ -26,10 +26,10 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("me")]
-    public async Task<IActionResult> UpdateMe(UpdateProfileRequest request)
+    public async Task<IActionResult> UpdateMe(UpdateProfileRequest request, IFormFile? image)
     {
         var userId = GetUserId();
-        var profile = await _userService.UpdateProfileAsync(userId, request);
+        var profile = await _userService.UpdateProfileAsync(userId, request, image);
         return Ok(profile);
     }
 

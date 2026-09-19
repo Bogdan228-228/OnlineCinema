@@ -1,6 +1,4 @@
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -113,6 +111,7 @@ builder.Services.AddScoped<IUserActivityService, UserActivityService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IMovieUploadService, MovieUploadService>();
+builder.Services.AddScoped<IActorUploadService, ActorUploadService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -144,7 +143,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var blobServiceClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
-    var containerClient = blobServiceClient.GetBlobContainerClient("private-media"); // public-assets // private-media
+    var containerClient = blobServiceClient.GetBlobContainerClient("public-assets"); // public-assets // private-media
     await containerClient.CreateIfNotExistsAsync();
 
     var prefixes = new HashSet<string>();

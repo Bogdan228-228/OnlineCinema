@@ -14,7 +14,8 @@ namespace OnlineCinema.API.DTOs
         [Required, MaxLength(100)] 
         string FullName,
         [MaxLength(1000)] 
-        string Biography
+        string Biography,
+        string? ImageUrl
     );
 
     public record ActorResponse(

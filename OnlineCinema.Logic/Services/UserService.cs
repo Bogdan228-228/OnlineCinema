@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.DTOs.Users;
@@ -14,10 +11,12 @@ namespace OnlineCinema.Logic.Services;
 public class UserService : IUserService
 {
     private readonly UserManager<User> _userManager;
+    private readonly BlobServiceClient _blobServiceClient;
 
-    public UserService(UserManager<User> userManager)
+    public UserService(UserManager<User> userManager, BlobServiceClient blobServiceClient)
     {
         _userManager = userManager;
+        _blobServiceClient = blobServiceClient;
     }
 
     public async Task<UserResponse> GetProfileAsync(Guid userId)
@@ -26,7 +25,7 @@ public class UserService : IUserService
         return MapToResponse(user);
     }
 
-    public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
+    public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, IFormFile? image)
     {
         var user = await FindUserOrThrowAsync(userId);
 
@@ -40,6 +39,11 @@ public class UserService : IUserService
             user.AvatarUrl = request.AvatarUrl;
         }
 
+        if (image != null)
+        {
+            user = await UploadUserImageAsync(userId, image!);
+        }
+
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
@@ -48,6 +52,30 @@ public class UserService : IUserService
         }
 
         return MapToResponse(user);
+    }
+
+    public async Task<User> UploadUserImageAsync(Guid userId, IFormFile file)
+    {
+        var user = await FindUserOrThrowAsync(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found", nameof(userId));
+        }
+
+        var containerClient = _blobServiceClient.GetBlobContainerClient("public-assets");
+        await containerClient.CreateIfNotExistsAsync();
+
+        var blobName = $"avatars/users/{user.Id}/{file.FileName}";
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        using (var stream = file.OpenReadStream())
+        {
+            await blobClient.UploadAsync(stream, overwrite: true);
+        }
+
+        user.AvatarUrl = blobClient.Uri.ToString();
+
+        return user;
     }
 
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
