@@ -174,6 +174,7 @@ namespace OnlineCinema.API.Controllers
         {
             var result = await _movieService.DeleteMovieAsync(id);
             if (!result) return NotFound(new { message = "Movie not found" });
+            await _movieUploadService.DeleteMovieFilesAsync(id);
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Movie, ActionType.Delete);
             return Ok(new { message = "Movie deleted successfully" });
         }
@@ -295,7 +296,8 @@ namespace OnlineCinema.API.Controllers
                 movie.AudioTracks.Select(at => new AudioTrackResponse(at.Id, at.Language)).ToList(),
                 movie.Platforms.Select(p => new PlatformResponse(p.Id, p.Name)).ToList(),
                 movie?.VideoUrl,
-                movie?.TrailerUrl
+                movie?.TrailerUrl,
+                movie?.SubtitleUrl
             );
         }
     }

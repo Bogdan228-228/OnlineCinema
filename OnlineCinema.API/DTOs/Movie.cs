@@ -73,7 +73,8 @@ namespace OnlineCinema.API.DTOs
         List<AudioTrackResponse> AudioTracks,
         List<PlatformResponse> Platforms,
         string? VideoUrl,
-        string? TrailerUrl
+        string? TrailerUrl,
+        string? SubtitleUrl
     );
 
     public record ShortMovieResponse(

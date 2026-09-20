@@ -8,5 +8,6 @@ namespace OnlineCinema.Domain.Abstractions.Services
         Task<Movie> UploadAndSliceVideoAsync(Guid movieId, IFormFile file);
         Task<Movie> UploadPosterAsync(Guid movieId, IFormFile file);
         Task<Movie> UploadTrailerAsync(Guid movieId, IFormFile file);
+        Task DeleteMovieFilesAsync(Guid movieId, CancellationToken ct = default);
     }
 }

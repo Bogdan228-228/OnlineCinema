@@ -17,6 +17,8 @@ using OnlineCinema.Logic.Services;
 using OnlineCinema.Logic.Services.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
+using Whisper.net;
+using Whisper.net.Ggml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +139,17 @@ builder.Services
 
 var blobConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
 builder.Services.AddSingleton(new BlobServiceClient(blobConnectionString));
+
+var modelPath = Path.Combine(AppContext.BaseDirectory, "Models", "ggml-base.bin");
+if (!File.Exists(modelPath))
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(modelPath)!);
+    using var modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(GgmlType.Base);
+    using var fileWriter = File.OpenWrite(modelPath);
+    await modelStream.CopyToAsync(fileWriter);
+}
+
+builder.Services.AddSingleton(WhisperFactory.FromPath(modelPath));
 
 var app = builder.Build();
 

@@ -4,8 +4,10 @@
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
+        public string? VideoUrl { get; set; }
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
+        public string? SubtitleUrl { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; }
         public decimal Review { get; set; }
@@ -23,6 +25,5 @@
         public ICollection<UserActivity> UserActivities { get; set; } = new List<UserActivity>();
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-        public string? VideoUrl { get; set; }
     }
 }
