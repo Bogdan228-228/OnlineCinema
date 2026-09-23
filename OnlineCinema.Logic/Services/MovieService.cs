@@ -42,7 +42,7 @@ namespace OnlineCinema.Logic.Services
                 Duration = duration,
                 Description = description,
                 Country = country,
-                ImgUrl = imgUrl,
+                PosterUrl = imgUrl,
                 Likes = 0,
                 Dislikes = 0
             };
@@ -83,7 +83,7 @@ namespace OnlineCinema.Logic.Services
             if (dislikes.HasValue) movie.Dislikes = dislikes.Value;
             if (description != null) movie.Description = description;
             if (country != null) movie.Country = country;
-            if (imgUrl != null) movie.ImgUrl = imgUrl;
+            if (imgUrl != null) movie.PosterUrl = imgUrl;
 
             return await _movieRepository.EditMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
         }

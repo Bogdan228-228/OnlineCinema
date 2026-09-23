@@ -10,7 +10,7 @@ namespace OnlineCinema.DataAccess.Configurations
         {
             builder.HasKey(m => m.Id);
             builder.Property(m => m.Title).IsRequired().HasMaxLength(100);
-            builder.Property(m => m.ImgUrl).IsRequired().HasMaxLength(200);
+            builder.Property(m => m.PosterUrl).IsRequired().HasMaxLength(200);
             builder.HasOne(m => m.Category).WithMany(c => c.Movies).HasForeignKey(m => m.CategoryId).OnDelete(DeleteBehavior.Restrict);
             builder.Property(m => m.Review).IsRequired().HasPrecision(3, 1);
             builder.Property(m => m.RecommendedAge).IsRequired();

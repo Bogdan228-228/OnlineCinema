@@ -12,5 +12,6 @@
         Movie,
         Platform,
         Review,
+        User
     }
 }

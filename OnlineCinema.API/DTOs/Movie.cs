@@ -64,19 +64,22 @@ namespace OnlineCinema.API.DTOs
         TimeSpan Duration,
         string Description,
         string Country,
-        string ImgUrl,
+        string PosterUrl,
         int Likes,
         int Dislikes,
         CategoryResponse Category,
         List<GenreResponse> Genres,
         List<ActorResponse> Actors,
         List<AudioTrackResponse> AudioTracks,
-        List<PlatformResponse> Platforms
+        List<PlatformResponse> Platforms,
+        string? VideoUrl,
+        string? TrailerUrl,
+        string? SubtitleUrl
     );
 
     public record ShortMovieResponse(
         Guid Id,
         string Title,
-        string ImgUrl
+        string PosterUrl
     );
 }
