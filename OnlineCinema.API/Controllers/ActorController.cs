@@ -97,6 +97,8 @@ namespace OnlineCinema.API.Controllers
             if (!result)
                 return NotFound(new { message = "Actor not found" });
 
+            await _actorUploadService.DeleteActorFilesAsync(id);
+
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Actor, ActionType.Delete);
 
             return Ok(new { message = "Actor deleted successfully" });

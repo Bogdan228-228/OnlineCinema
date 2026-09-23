@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
@@ -40,6 +41,13 @@ namespace OnlineCinema.Logic.Services
             actor = await _actorRepository.EditActorAsync(actor);
 
             return actor;
+        }
+
+        public async Task DeleteActorFilesAsync(Guid actorId, CancellationToken ct = default)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient("public-assets");
+
+            await BlobCleaner.DeletePrefixAsync(containerClient, $"avatars/actors/{actorId}/", ct);
         }
     }
 }

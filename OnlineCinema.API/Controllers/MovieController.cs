@@ -194,6 +194,7 @@ namespace OnlineCinema.API.Controllers
 
             movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
             movie.TrailerUrl = $"{movie.TrailerUrl}{sasQuery}";
+            movie.SubtitleUrl = $"{movie.SubtitleUrl}{sasQuery}";
 
             return Ok(MapMovie(movie));
         }

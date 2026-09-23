@@ -284,35 +284,12 @@ namespace OnlineCinema.Logic.Services
             var privateContainer = _blobServiceClient.GetBlobContainerClient("private-media");
             var publicContainer = _blobServiceClient.GetBlobContainerClient("public-assets");
 
-            await DeletePrefixAsync(privateContainer, $"videos/{movieId}/", ct);
-            await DeletePrefixAsync(privateContainer, $"subtitles/{movieId}/", ct);
-            await DeletePrefixAsync(privateContainer, $"trailers/{movieId}/", ct);
-            await DeletePrefixAsync(publicContainer, $"posters/{movieId}/", ct);
+            await BlobCleaner.DeletePrefixAsync(privateContainer, $"videos/{movieId}/", ct);
+            await BlobCleaner.DeletePrefixAsync(privateContainer, $"subtitles/{movieId}/", ct);
+            await BlobCleaner.DeletePrefixAsync(privateContainer, $"trailers/{movieId}/", ct);
+            await BlobCleaner.DeletePrefixAsync(publicContainer, $"posters/{movieId}/", ct);
 
             _logger.LogInformation("Deleted Blob files for movie {MovieId}", movieId);
-        }
-
-        private static async Task DeletePrefixAsync(
-            BlobContainerClient container,
-            string prefix,
-            CancellationToken ct)
-        {
-            var batch = new List<BlobClient>(64);
-
-            await foreach (var blobItem in container.GetBlobsAsync(
-                BlobTraits.None, BlobStates.None, prefix, ct))
-            {
-                batch.Add(container.GetBlobClient(blobItem.Name));
-
-                if (batch.Count == 64)
-                {
-                    await Task.WhenAll(batch.Select(b => b.DeleteIfExistsAsync()));
-                    batch.Clear();
-                }
-            }
-
-            if (batch.Count > 0)
-                await Task.WhenAll(batch.Select(b => b.DeleteIfExistsAsync()));
         }
     }
 }
