@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OnlineCinema.Domain.Models;
@@ -42,7 +41,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         return GenerateToken(claims, secret, TimeSpan.FromMinutes(expiresInMinutes));
     }
 
-    public async Task<string> GenerateRefreshToken(User user)
+    public string GenerateRefreshToken(User user)
     {
         var secret = _configuration["Jwt:RefreshSecret"]!;
         var expiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);

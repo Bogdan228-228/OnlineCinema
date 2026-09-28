@@ -85,7 +85,7 @@ builder.Services.AddScoped<ITokenHasher, TokenHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<OnlineCinema.Logic.Interfaces.IFavoriteService, OnlineCinema.Logic.Services.FavoriteService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -114,20 +114,6 @@ builder.Services
         };
     });
 
-var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-    foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
-    {
-        if (!await roleManager.RoleExistsAsync(roleName))
-        {
-            await roleManager.CreateAsync(new Role { Name = roleName });
-        }
-    }
-}
-
 builder.Services.AddScoped<IActorRepository, ActorRepository>();
 builder.Services.AddScoped<IAudioTrackRepository, AudioTrackRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -145,11 +131,23 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IPlatformService, PlatformService>();
 builder.Services.AddScoped<IUserActivityService, UserActivityService>();
-builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<OnlineCinema.Logic.Interfaces.IFavoriteService, OnlineCinema.Logic.Services.FavoriteService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new Role { Name = roleName });
+        }
+    }
+}
 
 await SeedAdmin.SeedAdminAsync(app);
 
