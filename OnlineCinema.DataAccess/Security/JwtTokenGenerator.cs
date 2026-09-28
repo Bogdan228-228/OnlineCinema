@@ -10,16 +10,19 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OnlineCinema.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace OnlineCinema.DataAccess.Security;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly IConfiguration _configuration;
+    private readonly UserManager<User> _userManager;
 
-    public JwtTokenGenerator(IConfiguration configuration)
+    public JwtTokenGenerator(IConfiguration configuration, UserManager<User> userManager)
     {
         _configuration = configuration;
+        _userManager = userManager;
     }
 
     public string GenerateAccessToken(User user, IEnumerable<string> roles)
@@ -39,7 +42,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         return GenerateToken(claims, secret, TimeSpan.FromMinutes(expiresInMinutes));
     }
 
-    public string GenerateRefreshToken(User user)
+    public async Task<string> GenerateRefreshToken(User user)
     {
         var secret = _configuration["Jwt:RefreshSecret"]!;
         var expiresInDays = int.Parse(_configuration["Jwt:RefreshExpiresInDays"]!);

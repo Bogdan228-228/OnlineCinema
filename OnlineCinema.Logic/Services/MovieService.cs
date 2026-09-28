@@ -1,5 +1,6 @@
 ﻿using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
+using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
 
 namespace OnlineCinema.Logic.Services
@@ -7,10 +8,12 @@ namespace OnlineCinema.Logic.Services
     public class MovieService : IMovieService
     {
         private readonly IMovieRepository _movieRepository;
+        private readonly IUserActivityRepository _userActivityRepository;
 
-        public MovieService(IMovieRepository movieRepository)
+        public MovieService(IMovieRepository movieRepository, IUserActivityRepository userActivityRepository)
         {
             _movieRepository = movieRepository;
+            _userActivityRepository = userActivityRepository;
         }
 
         public async Task<Movie> AddMovieAsync(
@@ -22,7 +25,11 @@ namespace OnlineCinema.Logic.Services
             TimeSpan duration,
             string description,
             string country,
-            string imgUrl = "")
+            string imgUrl = "",
+            List<int>? genreIds = null,
+            List<Guid>? actorIds = null,
+            List<int>? audioTrackIds = null,
+            List<int>? platformIds = null)
         {
             var movie = new Movie
             {
@@ -37,45 +44,148 @@ namespace OnlineCinema.Logic.Services
                 Country = country,
                 ImgUrl = imgUrl,
                 Likes = 0,
-                Dislikes = 0,
-                Genres = new List<Genre>(),
-                Actors = new List<Actor>(),
-                AudioTracks = new List<AudioTrack>(),
-                Platforms = new List<Platform>()
+                Dislikes = 0
             };
 
-            return await _movieRepository.AddMovieAsync(movie);
+            return await _movieRepository.AddMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
         }
 
 
         public async Task<Movie?> EditMovieAsync(
             Guid id,
-            string title,
-            int categoryId,
-            decimal review,
-            int recommendedAge,
-            DateOnly dateRealise,
-            TimeSpan duration,
-            string description,
-            string country,
-            string imgUrl = "")
+            string? title,
+            int? categoryId,
+            decimal? review,
+            int? recommendedAge,
+            DateOnly? dateRealise,
+            TimeSpan? duration,
+            int? likes,
+            int? dislikes,
+            string? description,
+            string? country,
+            string? imgUrl = null,
+            List<int>? genreIds = null,
+            List<Guid>? actorIds = null,
+            List<int>? audioTrackIds = null,
+            List<int>? platformIds = null)
         {
             var movie = await _movieRepository.GetMovieByIdAsync(id);
-
             if (movie == null)
                 return null;
 
-            movie.Title = title;
-            movie.CategoryId = categoryId;
-            movie.Review = review;
-            movie.RecommendedAge = recommendedAge;
-            movie.DateRealise = dateRealise;
-            movie.Duration = duration;
-            movie.Description = description;
-            movie.Country = country;
-            movie.ImgUrl = imgUrl;
+            if (title != null) movie.Title = title;
+            if (categoryId.HasValue) movie.CategoryId = categoryId.Value;
+            if (review.HasValue) movie.Review = review.Value;
+            if (recommendedAge.HasValue) movie.RecommendedAge = recommendedAge.Value;
+            if (dateRealise.HasValue) movie.DateRealise = dateRealise.Value;
+            if (duration.HasValue) movie.Duration = duration.Value;
+            if (likes.HasValue) movie.Likes = likes.Value;
+            if (dislikes.HasValue) movie.Dislikes = dislikes.Value;
+            if (description != null) movie.Description = description;
+            if (country != null) movie.Country = country;
+            if (imgUrl != null) movie.ImgUrl = imgUrl;
 
-            return await _movieRepository.EditMovieAsync(movie);
+            return await _movieRepository.EditMovieAsync(movie, genreIds, actorIds, audioTrackIds, platformIds);
+        }
+
+        public async Task<Movie?> LikeMovieAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var hasLike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
+
+            if (hasLike) return movie;
+            if (hasDislike)
+            {
+                if (movie.Dislikes > 0) movie.Dislikes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
+            }
+
+            movie.Likes++;
+            await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            await _userActivityRepository.AddUserActivity(new UserActivity
+            {
+                UserId = userId,
+                EntityId = movieId.ToString(),
+                EntityType = EntityType.Movie,
+                ActionType = ActionType.Like,
+                Timestamp = DateTime.UtcNow,
+                Weight = 2.0
+            });
+
+            return movie;
+        }
+
+        public async Task<Movie?> RemoveLikeAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Like))
+                .FirstOrDefault(a => a.EntityId == movieId.ToString() && a.EntityType == EntityType.Movie);
+
+            if (activity != null)
+            {
+                if (movie.Likes > 0) movie.Likes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            }
+
+            return movie;
+        }
+
+        public async Task<Movie?> DislikeMovieAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var hasLike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            var hasDislike = await _userActivityRepository.Exists(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
+
+            if (hasDislike) return movie;
+            if (hasLike)
+            {
+                if (movie.Likes > 0) movie.Likes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Like);
+            }
+
+            movie.Dislikes++;
+            await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+
+            await _userActivityRepository.AddUserActivity(new UserActivity
+            {
+                UserId = userId,
+                EntityId = movieId.ToString(),
+                EntityType = EntityType.Movie,
+                ActionType = ActionType.Dislike,
+                Timestamp = DateTime.UtcNow,
+                Weight = -1.0
+            });
+
+            return movie;
+        }
+
+        public async Task<Movie?> RemoveDislikeAsync(Guid userId, Guid movieId)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            var activity = (await _userActivityRepository.GetUserActivitiesByAction(userId, ActionType.Dislike))
+                .FirstOrDefault(a => a.EntityId == movieId.ToString() && a.EntityType == EntityType.Movie);
+
+            if (activity != null)
+            {
+                if (movie.Dislikes > 0) movie.Dislikes--;
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _userActivityRepository.DeleteActivityAsync(userId, movieId.ToString(), EntityType.Movie, ActionType.Dislike);
+            }
+
+            return movie;
         }
 
         public async Task<bool> DeleteMovieAsync(Guid movieId)
@@ -103,9 +213,9 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMovieByTitleAsync(title);
         }
 
-        public async Task<Movie?> GetMovieWithActorsAsync(Guid movieId)
+        public async Task<List<Movie>> GetMoviesByActorAsync(Guid actorId)
         {
-            return await _movieRepository.GetMovieWithActorsAsync(movieId);
+            return await _movieRepository.GetMoviesByActorAsync(actorId);
         }
 
         public async Task<List<Movie>> GetMoviesByCategoryAsync(int categoryId)
@@ -113,9 +223,9 @@ namespace OnlineCinema.Logic.Services
             return await _movieRepository.GetMoviesByCategoryAsync(categoryId);
         }
 
-        public async Task<List<Movie>> GetMoviesByGenreAsync(string genreName)
+        public async Task<List<Movie>> GetMoviesByGenreIdAsync(int genreId)
         {
-            return await _movieRepository.GetMoviesByGenreAsync(genreName);
+            return await _movieRepository.GetMoviesByGenreIdAsync(genreId);
         }
 
         public async Task<List<Movie>> GetMoviesByRatingAsync(decimal minRating)

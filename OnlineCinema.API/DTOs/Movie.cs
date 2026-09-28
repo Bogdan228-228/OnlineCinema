@@ -30,24 +30,25 @@ namespace OnlineCinema.API.DTOs
     public record EditMovieRequest(
         [Required] 
         Guid Id,
-        [Required, MaxLength(100)] 
-        string Title,
-        [Required] 
-        int CategoryId,
-        [Required, Range(0, 10)] 
-        decimal Review,
-        [Required, Range(0, 18)] 
-        int RecommendedAge,
-        [Required] 
-        DateOnly DateRealise,
-        [Required] 
-        TimeSpan Duration,
-        [Required, MaxLength(1000)]
-        string Description,
-        [Required, MaxLength(100)] 
-        string Country,
-        [Required, MaxLength(200)] 
-        string ImgUrl,
+        [ MaxLength(100)] 
+        string? Title,
+        int? CategoryId,
+        [Range(0, 10)] 
+        decimal? Review,
+        [Range(0, 18)] 
+        int? RecommendedAge,
+        DateOnly? DateRealise,
+        TimeSpan? Duration,
+        [Range(0, int.MaxValue)]
+        int? Likes,
+        [Range(0, int.MaxValue)]
+        int? Dislikes,
+        [MaxLength(1000)]
+        string? Description,
+        [MaxLength(100)] 
+        string? Country,
+        [MaxLength(200)] 
+        string? ImgUrl,
         List<int>? GenreIds,
         List<Guid>? ActorIds,
         List<int>? AudioTrackIds,
@@ -71,5 +72,11 @@ namespace OnlineCinema.API.DTOs
         List<ActorResponse> Actors,
         List<AudioTrackResponse> AudioTracks,
         List<PlatformResponse> Platforms
+    );
+
+    public record ShortMovieResponse(
+        Guid Id,
+        string Title,
+        string ImgUrl
     );
 }

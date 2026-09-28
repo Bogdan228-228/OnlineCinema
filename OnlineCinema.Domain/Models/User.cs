@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace OnlineCinema.Domain.Models;
 
@@ -13,4 +10,7 @@ public class User : IdentityUser<Guid>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<UserActivity> UserActivities { get; set; } = new List<UserActivity>();
+    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }
