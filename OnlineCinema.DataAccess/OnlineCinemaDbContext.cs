@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using OnlineCinema.Domain.Models;
+using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace OnlineCinema.DataAccess;
 
@@ -31,6 +34,22 @@ public class OnlineCinemaDbContext : IdentityDbContext<User, Role, Guid>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Movie>()
+       .Property(m => m.SubtitleUrls)
+       .HasColumnType("jsonb")
+       .HasConversion(
+           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+           v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, (JsonSerializerOptions?)null)
+                ?? new Dictionary<string, string>())
+       .Metadata.SetValueComparer(new ValueComparer<Dictionary<string, string>>(
+           (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null) ==
+                     JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
+           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(),
+           v => JsonSerializer.Deserialize<Dictionary<string, string>>(
+                    JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    (JsonSerializerOptions?)null)!));
+
         builder.ApplyConfigurationsFromAssembly(typeof(OnlineCinemaDbContext).Assembly);
     }
 }

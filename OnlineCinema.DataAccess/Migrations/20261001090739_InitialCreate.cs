@@ -4,6 +4,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace OnlineCinema.DataAccess.Migrations
 {
     /// <inheritdoc />
@@ -18,7 +20,8 @@ namespace OnlineCinema.DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     FullName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Biography = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false)
+                    Biography = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -149,8 +152,8 @@ namespace OnlineCinema.DataAccess.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Body = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Body = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -166,11 +169,11 @@ namespace OnlineCinema.DataAccess.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     SubscriptionId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    Currency = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
+                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    ProviderTransactionId = table.Column<string>(type: "text", nullable: true),
-                    Provider = table.Column<string>(type: "text", nullable: false),
+                    ProviderTransactionId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Provider = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -214,12 +217,12 @@ namespace OnlineCinema.DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Price = table.Column<decimal>(type: "numeric", nullable: false),
-                    Currency = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
+                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     DurationDays = table.Column<int>(type: "integer", nullable: false),
                     MaxSimultaneousStreams = table.Column<int>(type: "integer", nullable: false),
-                    MaxQuality = table.Column<string>(type: "text", nullable: false),
+                    MaxQuality = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -362,7 +365,9 @@ namespace OnlineCinema.DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ImgUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    VideoUrl = table.Column<string>(type: "text", nullable: true),
+                    PosterUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    TrailerUrl = table.Column<string>(type: "text", nullable: true),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     Review = table.Column<decimal>(type: "numeric(3,1)", precision: 3, scale: 1, nullable: false),
                     RecommendedAge = table.Column<int>(type: "integer", nullable: false),
@@ -371,7 +376,9 @@ namespace OnlineCinema.DataAccess.Migrations
                     Likes = table.Column<int>(type: "integer", nullable: false),
                     Dislikes = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    Country = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                    Country = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ProcessingStatus = table.Column<string>(type: "text", nullable: true),
+                    SubtitleUrls = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -405,7 +412,7 @@ namespace OnlineCinema.DataAccess.Migrations
                         column: x => x.PlanId,
                         principalTable: "SubscriptionPlans",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -563,10 +570,13 @@ namespace OnlineCinema.DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MovieId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntityId = table.Column<string>(type: "text", nullable: true),
+                    EntityType = table.Column<int>(type: "integer", nullable: false),
                     ActionType = table.Column<int>(type: "integer", nullable: false),
+                    Weight = table.Column<double>(type: "double precision", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Metadata = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true)
+                    Metadata = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    MovieId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -581,8 +591,17 @@ namespace OnlineCinema.DataAccess.Migrations
                         name: "FK_UserActivities_Movies_MovieId",
                         column: x => x.MovieId,
                         principalTable: "Movies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "SubscriptionPlans",
+                columns: new[] { "Id", "Currency", "DurationDays", "IsActive", "MaxQuality", "MaxSimultaneousStreams", "Name", "Price" },
+                values: new object[,]
+                {
+                    { new Guid("11111111-1111-1111-1111-111111111111"), "UAH", 30, true, "SD", 1, "Basic", 99m },
+                    { new Guid("22222222-2222-2222-2222-222222222222"), "UAH", 30, true, "HD", 2, "Standard", 199m },
+                    { new Guid("33333333-3333-3333-3333-333333333333"), "UAH", 30, true, "UHD", 4, "Premium", 299m }
                 });
 
             migrationBuilder.CreateIndex(
@@ -658,6 +677,12 @@ namespace OnlineCinema.DataAccess.Migrations
                 column: "MoviesId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_History_UserId_ContentId",
+                table: "History",
+                columns: new[] { "UserId", "ContentId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MoviePlatform_PlatformsId",
                 table: "MoviePlatform",
                 column: "PlatformsId");
@@ -666,6 +691,16 @@ namespace OnlineCinema.DataAccess.Migrations
                 name: "IX_Movies_CategoryId",
                 table: "Movies",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId_IsRead",
+                table: "Notifications",
+                columns: new[] { "UserId", "IsRead" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_UserId",
+                table: "Payments",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
@@ -682,6 +717,11 @@ namespace OnlineCinema.DataAccess.Migrations
                 name: "IX_Subscriptions_PlanId",
                 table: "Subscriptions",
                 column: "PlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_UserId_Status",
+                table: "Subscriptions",
+                columns: new[] { "UserId", "Status" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserActivities_MovieId",

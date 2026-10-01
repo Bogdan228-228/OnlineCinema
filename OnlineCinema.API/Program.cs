@@ -1,9 +1,12 @@
 using Azure.Storage.Blobs;
+using Hangfire;
+using Hangfire.Redis.StackExchange;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OnlineCinema.API.Hubs;
 using OnlineCinema.API.Middleware;
 using OnlineCinema.DataAccess;
 using OnlineCinema.DataAccess.Repositories;
@@ -15,6 +18,7 @@ using OnlineCinema.Domain.Models;
 using OnlineCinema.Logic.Interfaces;
 using OnlineCinema.Logic.Services;
 using OnlineCinema.Logic.Services.Serialization;
+using StackExchange.Redis;
 using System.Text;
 using System.Text.Json.Serialization;
 using Whisper.net;
@@ -28,7 +32,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
@@ -72,8 +76,36 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<OnlineCinemaDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("DB_Connection")));
 
+var redisConnection = await ConnectionMultiplexer.ConnectAsync(Environment.GetEnvironmentVariable("REDIS_Connection") ?? "localhost:6379");
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(redisConnection);
+
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseRedisStorage(redisConnection, new RedisStorageOptions
+    {
+        Prefix = "{onclinecinema}:hangfire:",
+        Db = 0
+    }));
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2);
+    options.Queues = new[] { "video", "default" };
+});
+
+builder.Services.AddSignalR();
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = Environment.GetEnvironmentVariable("REDIS_Connection") ?? "localhost:6379";
+    options.InstanceName = "OnlineCinema:";
+});
+
 builder.Services
-    .AddIdentity<User, Role>(options =>
+    .AddIdentity<User, OnlineCinema.Domain.Models.Role>(options =>
     {
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
@@ -114,6 +146,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IMovieUploadService, MovieUploadService>();
 builder.Services.AddScoped<IActorUploadService, ActorUploadService>();
+builder.Services.AddScoped<IVideoProgressNotifier, SignalRVideoProgressNotifier>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -156,7 +189,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var blobServiceClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
-    var containerClient = blobServiceClient.GetBlobContainerClient("public-assets"); // public-assets // private-media
+    var containerClient = blobServiceClient.GetBlobContainerClient("private-media"); // public-assets // private-media
     await containerClient.CreateIfNotExistsAsync();
 
     var prefixes = new HashSet<string>();
@@ -171,12 +204,12 @@ using (var scope = app.Services.CreateScope())
 
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<OnlineCinema.Domain.Models.Role>>();
     foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
-            await roleManager.CreateAsync(new Role { Name = roleName });
+            await roleManager.CreateAsync(new OnlineCinema.Domain.Models.Role { Name = roleName });
         }
     }
 }
@@ -185,14 +218,23 @@ await SeedAdmin.SeedAdminAsync(app);
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new OnlineCinema.API.HangfireAdminFilter() }
+    });
+}
+
+app.MapHub<MovieProgressHub>("/hubs/movie-progress");
+
 app.MapControllers();
 app.Run();

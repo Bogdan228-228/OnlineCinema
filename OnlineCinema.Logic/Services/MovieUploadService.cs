@@ -1,13 +1,14 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Models;
 using System.Diagnostics;
 using Whisper.net;
-using Whisper.net.Ggml;
 
 namespace OnlineCinema.Logic.Services
 {
@@ -17,59 +18,46 @@ namespace OnlineCinema.Logic.Services
         private readonly IMovieRepository _movieRepository;
         private readonly WhisperFactory _whisperFactory;
         private readonly ILogger<MovieUploadService> _logger;
+        private readonly IVideoProgressNotifier _notifier;
+        private readonly IDistributedCache _cache;
 
         private static readonly string[] SubtitleLanguages = { "en", "uk" };
 
-        public MovieUploadService(BlobServiceClient blobServiceClient, IMovieRepository movieRepository, WhisperFactory whisperFactory, ILogger<MovieUploadService> logger)
+        public MovieUploadService(BlobServiceClient blobServiceClient, IMovieRepository movieRepository, WhisperFactory whisperFactory, ILogger<MovieUploadService> logger, IVideoProgressNotifier notifier, IDistributedCache cache)
         {
             _blobServiceClient = blobServiceClient;
             _movieRepository = movieRepository;
             _whisperFactory = whisperFactory;
             _logger = logger;
-        }
-
-        private static async Task RunFfmpegAsync(string arguments)
-        {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "ffmpeg",
-                    Arguments = arguments,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-
-            var stderrTask = process.StandardError.ReadToEndAsync();
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-
-            await process.WaitForExitAsync();
-            var stderr = await stderrTask;
-            var stdout = await stdoutTask;
-
-            if (process.ExitCode != 0)
-                throw new InvalidOperationException(
-                    $"ffmpeg failed (exit {process.ExitCode}):\n{stderr}");
+            _notifier = notifier;
+            _cache = cache;
         }
 
         public async Task<Movie> UploadAndSliceVideoAsync(Guid movieId, IFormFile file)
         {
-            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
-            if (movie == null)
-            {
-                throw new ArgumentException("Movie not found", nameof(movieId));
-            }
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId)
+        ?? throw new ArgumentException("Movie not found", nameof(movieId));
 
-            var tempPath = Path.GetTempFileName();
+            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4");
             await using (var stream = new FileStream(tempPath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
+
+            BackgroundJob.Enqueue<ProcessVideoJob>(job =>
+                job.RunAsync(movieId, tempPath));
+
+            movie.ProcessingStatus = "processing";
+            movie = await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+            await _cache.RemoveAsync($"movie:{movieId}");
+
+            return movie;
+        }
+
+        public async Task ProcessVideoInBackgroundAsync(Guid movieId, string tempPath)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId)
+                ?? throw new ArgumentException("Movie not found", nameof(movieId));
 
             var outputDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(outputDirectory);
@@ -77,14 +65,14 @@ namespace OnlineCinema.Logic.Services
             try
             {
                 var playlistPath = Path.Combine(outputDirectory, "index.m3u8");
-                var ffmpegArgs = $"-y -i \"{tempPath}\" -codec copy -start_number 0 -hls_time 10 -hls_list_size 0 -f hls \"{playlistPath}\"";
-
-                _logger.LogInformation("Starting HLS slicing for movie {MovieId}", movie.Id);
-                await RunFfmpegAsync(ffmpegArgs);
+                await RunFfmpegAsync(
+                    $"-y -i \"{tempPath}\" -codec copy -start_number 0 " +
+                    $"-hls_time 10 -hls_list_size 0 -f hls \"{playlistPath}\"");
 
                 var audioPath = Path.Combine(outputDirectory, "audio.wav");
-                _logger.LogInformation("Extracting audio for movie {MovieId}", movie.Id);
-                await RunFfmpegAsync($"-y -i \"{tempPath}\" -vn -ac 1 -ar 16000 -c:a pcm_s16le \"{audioPath}\"");
+                await RunFfmpegAsync(
+                    $"-y -i \"{tempPath}\" -vn -ac 1 -ar 16000 " +
+                    $"-c:a pcm_s16le \"{audioPath}\"");
 
                 var generatedSubtitles = new Dictionary<string, string>();
                 foreach (var lang in SubtitleLanguages)
@@ -120,8 +108,6 @@ namespace OnlineCinema.Logic.Services
                     });
                 }
 
-                _logger.LogInformation("Uploaded HLS for movie {MovieId}", movie.Id);
-
                 foreach (var (lang, vttPath) in generatedSubtitles)
                 {
                     if (!File.Exists(vttPath)) continue;
@@ -136,23 +122,69 @@ namespace OnlineCinema.Logic.Services
                             ContentType = "text/vtt; charset=utf-8"
                         }
                     });
-
-                    _logger.LogInformation(
-                        "Uploaded subtitles {Lang} for movie {MovieId}", lang, movie.Id);
                 }
 
                 movie.VideoUrl = $"{containerClient.Uri}/videos/{movie.Id}/index.m3u8";
                 movie.Duration = duration;
-                movie = await _movieRepository.EditMovieAsync(movie, null, null, null, null);
-                return movie;
+                movie.ProcessingStatus = "ready";
+
+                var subtitleUrls = generatedSubtitles.ToDictionary
+                    (
+                        kvp => kvp.Key,
+                        kvp => $"{containerClient.Uri}/subtitles/{movie.Id}/{kvp.Key}.vtt"
+                    );
+
+                movie.SubtitleUrls = subtitleUrls;
+
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _cache.RemoveAsync($"movie:{movieId}");
+
+
+                await _notifier.NotifyMovieReadyAsync(movie.Id, movie.VideoUrl, subtitleUrls);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while processing movie {movieId}");
+                movie.ProcessingStatus = "failed";
+                await _movieRepository.EditMovieAsync(movie, null, null, null, null);
+                await _cache.RemoveAsync($"movie:{movieId}");
+                await _notifier.NotifyMovieFailedAsync(movieId, ex.Message);
+                throw;
             }
             finally
             {
-                if (File.Exists(tempPath))
-                    File.Delete(tempPath);
                 if (Directory.Exists(outputDirectory))
                     Directory.Delete(outputDirectory, recursive: true);
             }
+        }
+
+        private static async Task RunFfmpegAsync(string arguments)
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments = arguments,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+
+            var stderrTask = process.StandardError.ReadToEndAsync();
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+            var stderr = await stderrTask;
+            var stdout = await stdoutTask;
+
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException(
+                    $"ffmpeg failed (exit {process.ExitCode}):\n{stderr}");
         }
 
         private async Task GenerateSubtitlesAsync(string audioPath, string vttPath, string language)

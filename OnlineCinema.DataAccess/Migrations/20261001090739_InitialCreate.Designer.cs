@@ -12,7 +12,7 @@ using OnlineCinema.DataAccess;
 namespace OnlineCinema.DataAccess.Migrations
 {
     [DbContext(typeof(OnlineCinemaDbContext))]
-    [Migration("20260821083514_InitialCreate")]
+    [Migration("20261001090739_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -204,6 +204,9 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Actors");
@@ -376,6 +379,9 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId", "ContentId")
+                        .IsUnique();
+
                     b.ToTable("History");
                 });
 
@@ -407,13 +413,16 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.Property<TimeSpan>("Duration")
                         .HasColumnType("interval");
 
-                    b.Property<string>("ImgUrl")
+                    b.Property<int>("Likes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PosterUrl")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("Likes")
-                        .HasColumnType("integer");
+                    b.Property<string>("ProcessingStatus")
+                        .HasColumnType("text");
 
                     b.Property<int>("RecommendedAge")
                         .HasColumnType("integer");
@@ -422,10 +431,20 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasPrecision(3, 1)
                         .HasColumnType("numeric(3,1)");
 
+                    b.Property<string>("SubtitleUrls")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TrailerUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -442,7 +461,8 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.Property<string>("Body")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -452,7 +472,8 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -461,6 +482,8 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IsRead");
 
                     b.ToTable("Notifications");
                 });
@@ -472,21 +495,25 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<string>("Provider")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ProviderTransactionId")
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -498,6 +525,8 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Payments");
                 });
@@ -647,6 +676,8 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.HasIndex("PlanId");
 
+                    b.HasIndex("UserId", "Status");
+
                     b.ToTable("Subscriptions");
                 });
 
@@ -658,7 +689,8 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<int>("DurationDays")
                         .HasColumnType("integer");
@@ -668,21 +700,59 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.Property<string>("MaxQuality")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<int>("MaxSimultaneousStreams")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.HasKey("Id");
 
                     b.ToTable("SubscriptionPlans");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Currency = "UAH",
+                            DurationDays = 30,
+                            IsActive = true,
+                            MaxQuality = "SD",
+                            MaxSimultaneousStreams = 1,
+                            Name = "Basic",
+                            Price = 99m
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            Currency = "UAH",
+                            DurationDays = 30,
+                            IsActive = true,
+                            MaxQuality = "HD",
+                            MaxSimultaneousStreams = 2,
+                            Name = "Standard",
+                            Price = 199m
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            Currency = "UAH",
+                            DurationDays = 30,
+                            IsActive = true,
+                            MaxQuality = "UHD",
+                            MaxSimultaneousStreams = 4,
+                            Name = "Premium",
+                            Price = 299m
+                        });
                 });
 
             modelBuilder.Entity("OnlineCinema.Domain.Models.User", b =>
@@ -771,11 +841,17 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.Property<int>("ActionType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("EntityId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("EntityType")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Metadata")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<Guid>("MovieId")
+                    b.Property<Guid?>("MovieId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Timestamp")
@@ -783,6 +859,9 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<double>("Weight")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -969,7 +1048,7 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.HasOne("OnlineCinema.Domain.Models.SubscriptionPlan", "Plan")
                         .WithMany()
                         .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Plan");
@@ -977,19 +1056,15 @@ namespace OnlineCinema.DataAccess.Migrations
 
             modelBuilder.Entity("OnlineCinema.Domain.Models.UserActivity", b =>
                 {
-                    b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
+                    b.HasOne("OnlineCinema.Domain.Models.Movie", null)
                         .WithMany("UserActivities")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MovieId");
 
                     b.HasOne("OnlineCinema.Domain.Models.User", "User")
                         .WithMany("UserActivities")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Movie");
 
                     b.Navigation("User");
                 });
