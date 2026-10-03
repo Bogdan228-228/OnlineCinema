@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Logic.DTOs.Users;
 using OnlineCinema.Logic.Interfaces;
+using System.Security.Claims;
 
 namespace OnlineCinema.API.Controllers;
 
@@ -13,11 +14,13 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IUserActivityService _userActivityService;
+    private readonly IUserStatistic _userStatistic;
 
-    public UsersController(IUserService userService, IUserActivityService userActivityService)
+    public UsersController(IUserService userService, IUserActivityService userActivityService, IUserStatistic userStatistic)
     {
         _userService = userService;
         _userActivityService = userActivityService;
+        _userStatistic = userStatistic;
     }
 
     [HttpGet("me")]
@@ -27,6 +30,17 @@ public class UsersController : ControllerBase
         var profile = await _userService.GetProfileAsync(userId);
         await _userActivityService.AddActivityAsync(userId, userId.ToString(), Domain.Enums.EntityType.User, Domain.Enums.ActionType.View);
         return Ok(profile);
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetMyStats()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var stats = await _userStatistic.GetUserStatisticAsync(userId);
+        return Ok(stats);
     }
 
     [HttpPut("me")]

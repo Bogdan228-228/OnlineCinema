@@ -147,6 +147,7 @@ builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IMovieUploadService, MovieUploadService>();
 builder.Services.AddScoped<IActorUploadService, ActorUploadService>();
 builder.Services.AddScoped<IVideoProgressNotifier, SignalRVideoProgressNotifier>();
+builder.Services.AddScoped<IUserStatistic, UserStatistic>();
 
 builder.Services
     .AddAuthentication(options =>
