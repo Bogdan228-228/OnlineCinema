@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace OnlineCinema.API.Hubs
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class MovieProgressHub : Hub
     {
         public async Task JoinMovieGroup(string movieId)

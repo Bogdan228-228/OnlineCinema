@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Hangfire;
 using Hangfire.Redis.StackExchange;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -169,6 +170,18 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:AccessSecret"]!))
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 var blobConnectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
@@ -185,23 +198,18 @@ if (!File.Exists(modelPath))
 
 builder.Services.AddSingleton(WhisperFactory.FromPath(modelPath));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy => policy
+        .WithOrigins("http://localhost:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
+});
+
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var blobServiceClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
-    var containerClient = blobServiceClient.GetBlobContainerClient("private-media"); // public-assets // private-media
-    await containerClient.CreateIfNotExistsAsync();
-
-    var prefixes = new HashSet<string>();
-
-    var movieFolders = new HashSet<string>();
-
-    await foreach (var blobItem in containerClient.GetBlobsAsync())
-    {
-        Console.WriteLine(blobItem.Name);
-    }
-}
+app.UseCors("frontend");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -218,8 +226,6 @@ using (var scope = app.Services.CreateScope())
 await SeedAdmin.SeedAdminAsync(app);
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

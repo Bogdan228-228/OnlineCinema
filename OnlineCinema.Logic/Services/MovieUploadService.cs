@@ -44,13 +44,12 @@ namespace OnlineCinema.Logic.Services
                 await file.CopyToAsync(stream);
             }
 
-            BackgroundJob.Enqueue<ProcessVideoJob>(job =>
-                job.RunAsync(movieId, tempPath));
-
             movie.ProcessingStatus = "processing";
             movie = await _movieRepository.EditMovieAsync(movie, null, null, null, null);
             await _cache.RemoveAsync($"movie:{movieId}");
 
+            BackgroundJob.Enqueue<ProcessVideoJob>(job => job.RunAsync(movieId, tempPath));
+            
             return movie;
         }
 

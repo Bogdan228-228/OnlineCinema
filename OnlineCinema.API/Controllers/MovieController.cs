@@ -73,6 +73,8 @@ namespace OnlineCinema.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPatch("upload-video/{id}")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5L * 1024 * 1024 * 1024)]
         public async Task<IActionResult> UploadMovie(Guid id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -107,6 +109,8 @@ namespace OnlineCinema.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPatch("upload-trailer/{id}")]
+        [RequestSizeLimit(500 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500 * 1024 * 1024)]
         public async Task<IActionResult> UploadTrailer(Guid id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)

@@ -16,6 +16,7 @@ namespace OnlineCinema.Logic.Services
         }
 
         [Queue("video")]
+        [AutomaticRetry(Attempts = 0)]
         [DisableConcurrentExecution(timeoutInSeconds: 600)]
         public async Task RunAsync(Guid movieId, string tempPath)
         {
