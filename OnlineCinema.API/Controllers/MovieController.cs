@@ -73,6 +73,8 @@ namespace OnlineCinema.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPatch("upload-video/{id}")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5L * 1024 * 1024 * 1024)]
         public async Task<IActionResult> UploadMovie(Guid id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -107,6 +109,8 @@ namespace OnlineCinema.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPatch("upload-trailer/{id}")]
+        [RequestSizeLimit(500 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 500 * 1024 * 1024)]
         public async Task<IActionResult> UploadTrailer(Guid id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -194,7 +198,10 @@ namespace OnlineCinema.API.Controllers
 
             movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
             movie.TrailerUrl = $"{movie.TrailerUrl}{sasQuery}";
-            movie.SubtitleUrl = $"{movie.SubtitleUrl}{sasQuery}";
+            foreach (var (key, value) in movie.SubtitleUrls)
+            {
+                movie.SubtitleUrls[key] = $"{value}{sasQuery}";
+            }
 
             return Ok(MapMovie(movie));
         }
@@ -288,17 +295,30 @@ namespace OnlineCinema.API.Controllers
                 movie.Duration,
                 movie.Description,
                 movie.Country,
-                movie.PosterUrl,
+                movie?.PosterUrl,
                 movie.Likes,
                 movie.Dislikes,
-                new CategoryResponse(movie.Category.Id, movie.Category.Name),
-                movie.Genres.Select(g => new GenreResponse(g.Id, g.Name)).ToList(),
-                movie.Actors.Select(a => new ActorResponse(a.Id, a.FullName, a.Biography)).ToList(),
-                movie.AudioTracks.Select(at => new AudioTrackResponse(at.Id, at.Language)).ToList(),
-                movie.Platforms.Select(p => new PlatformResponse(p.Id, p.Name)).ToList(),
+
+                movie.Category != null
+                    ? new CategoryResponse(movie.Category.Id, movie.Category.Name)
+                    : new CategoryResponse(0, string.Empty),
+
+                movie.Genres?.Select(g => new GenreResponse(g.Id, g.Name)).ToList()
+                    ?? new List<GenreResponse>(),
+
+                movie.Actors?.Select(a => new ActorResponse(a.Id, a.FullName, a.Biography)).ToList()
+                    ?? new List<ActorResponse>(),
+
+                movie.AudioTracks?.Select(at => new AudioTrackResponse(at.Id, at.Language)).ToList()
+                    ?? new List<AudioTrackResponse>(),
+
+                movie.Platforms?.Select(p => new PlatformResponse(p.Id, p.Name)).ToList()
+                    ?? new List<PlatformResponse>(),
+
                 movie?.VideoUrl,
                 movie?.TrailerUrl,
-                movie?.SubtitleUrl
+                movie?.ProcessingStatus,
+                movie?.SubtitleUrls ?? new Dictionary<string, string>()
             );
         }
     }

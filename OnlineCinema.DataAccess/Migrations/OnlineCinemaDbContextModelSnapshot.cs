@@ -201,6 +201,9 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Actors");
@@ -415,12 +418,19 @@ namespace OnlineCinema.DataAccess.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("ProcessingStatus")
+                        .HasColumnType("text");
+
                     b.Property<int>("RecommendedAge")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Review")
                         .HasPrecision(3, 1)
                         .HasColumnType("numeric(3,1)");
+
+                    b.Property<string>("SubtitleUrls")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Title")
                         .IsRequired()

@@ -1,4 +1,6 @@
-﻿namespace OnlineCinema.Domain.Models
+﻿using System.Text.Json.Serialization;
+
+namespace OnlineCinema.Domain.Models
 {
     public class Actor
     {
@@ -6,6 +8,7 @@
         public string FullName { get; set; }
         public string Biography { get; set; }
         public string? ImageUrl { get; set; }
+        [JsonIgnore]
         public ICollection<Movie> Movies { get; set; } = new List<Movie>();
     }
 }

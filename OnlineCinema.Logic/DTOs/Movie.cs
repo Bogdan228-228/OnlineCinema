@@ -74,7 +74,8 @@ namespace OnlineCinema.API.DTOs
         List<PlatformResponse> Platforms,
         string? VideoUrl,
         string? TrailerUrl,
-        string? SubtitleUrl
+        string? ProcessingStatus,
+        Dictionary<string, string> SubtitleUrls
     );
 
     public record ShortMovieResponse(

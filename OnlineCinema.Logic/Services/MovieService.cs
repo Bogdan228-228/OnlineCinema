@@ -1,7 +1,11 @@
-﻿using OnlineCinema.Domain.Abstractions.Repositories;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using OnlineCinema.API.DTOs;
+using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace OnlineCinema.Logic.Services
 {
@@ -9,11 +13,13 @@ namespace OnlineCinema.Logic.Services
     {
         private readonly IMovieRepository _movieRepository;
         private readonly IUserActivityRepository _userActivityRepository;
+        private readonly IDistributedCache _cache;
 
-        public MovieService(IMovieRepository movieRepository, IUserActivityRepository userActivityRepository)
+        public MovieService(IMovieRepository movieRepository, IUserActivityRepository userActivityRepository, IDistributedCache cache)
         {
             _movieRepository = movieRepository;
             _userActivityRepository = userActivityRepository;
+            _cache = cache;
         }
 
         public async Task<Movie> AddMovieAsync(
@@ -167,6 +173,8 @@ namespace OnlineCinema.Logic.Services
                 Weight = -1.0
             });
 
+            await _cache.RemoveAsync($"movie:{movie.Id}");
+
             return movie;
         }
 
@@ -193,6 +201,7 @@ namespace OnlineCinema.Logic.Services
             var movie = await _movieRepository.GetMovieByIdAsync(movieId);
             if (movie != null)
             {
+                await _cache.RemoveAsync($"movie:{movie.Id}");
                 return await _movieRepository.DeleteMovieAsync(movie.Id);
             }
             return false;
@@ -200,7 +209,24 @@ namespace OnlineCinema.Logic.Services
 
         public async Task<Movie?> GetMovieByIdAsync(Guid movieId)
         {
-            return await _movieRepository.GetMovieByIdAsync(movieId);
+            var cacheKey = $"movie:{movieId}";
+
+            var cached = await _cache.GetStringAsync(cacheKey);
+            if (cached != null)
+            {
+                return JsonSerializer.Deserialize<Movie>(cached);
+            }
+
+            var movie = await _movieRepository.GetMovieByIdAsync(movieId);
+            if (movie == null) return null;
+
+            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(movie),
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                });
+
+            return movie;
         }
 
         public async Task<List<Movie>> GetAllMoviesAsync()

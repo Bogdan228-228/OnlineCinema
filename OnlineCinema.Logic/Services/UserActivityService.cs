@@ -8,10 +8,12 @@ namespace OnlineCinema.Logic.Services
     public class UserActivityService : IUserActivityService
     {
         private readonly IUserActivityRepository _userActivityRepository;
+        private readonly IUserStatistic _userStatistic;
 
-        public UserActivityService(IUserActivityRepository userActivityRepository)
+        public UserActivityService(IUserActivityRepository userActivityRepository, IUserStatistic userStatistic)
         {
             _userActivityRepository = userActivityRepository;
+            _userStatistic = userStatistic;
         }
 
         public async Task<UserActivity> AddActivityAsync(Guid userId, string? entityId, EntityType entityType, ActionType actionType, string? metadata = null, double weight = 1.0)
@@ -26,6 +28,8 @@ namespace OnlineCinema.Logic.Services
                 Timestamp = DateTime.UtcNow,
                 Weight = weight
             };
+
+            await _userStatistic.InvalidateCacheAsync(activity.UserId);
 
             return await _userActivityRepository.AddUserActivity(activity);
         }
