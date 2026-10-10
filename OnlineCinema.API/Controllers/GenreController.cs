@@ -82,6 +82,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(new { message = "Actor deleted successfully" });
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetGenreById(int id)
         {
@@ -99,6 +100,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllGenres()
         {
@@ -114,6 +116,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("get-by-name")]
         public async Task<IActionResult> GetGenreByName(string name)
         {
