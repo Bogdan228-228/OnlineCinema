@@ -82,6 +82,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(new { message = "Audio track deleted successfully" });
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAudioTrackById(int id)
         {
@@ -99,6 +100,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllAudioTracks()
         {
@@ -114,6 +116,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("get-by-language")]
         public async Task<IActionResult> GetAudioTracksByLanguage(string language)
         {

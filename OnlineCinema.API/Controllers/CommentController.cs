@@ -93,6 +93,7 @@ namespace OnlineCinema.API.Controllers
             return NoContent();
         }
 
+        [Authorize]
         [HttpGet("get-by-id/{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -134,6 +135,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("movie/{movieId:guid}")]
         public async Task<IActionResult> GetByMovieId(Guid movieId)
         {

@@ -243,6 +243,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-country")]
         public async Task<IActionResult> GetMoviesByCountry(string country)
         {
@@ -251,6 +252,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-genre/{genreId}")]
         public async Task<IActionResult> GetMoviesByGenreId(int genreId)
         {
@@ -259,6 +261,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-rating")]
         public async Task<IActionResult> GetMoviesByRating(decimal minRating)
         {
@@ -267,6 +270,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-year")]
         public async Task<IActionResult> GetMoviesByYear(int year)
         {
@@ -275,6 +279,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(movies.Select(MapMovie));
         }
 
+        [Authorize]
         [HttpGet("by-actor/{id}")]
         public async Task<IActionResult> GetMoviesByActor(Guid id)
         {

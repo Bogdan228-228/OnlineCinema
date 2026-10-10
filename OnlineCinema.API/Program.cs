@@ -213,6 +213,9 @@ app.UseCors("frontend");
 
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<OnlineCinemaDbContext>();
+    db.Database.Migrate();
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<OnlineCinema.Domain.Models.Role>>();
     foreach (var roleName in new[] { RoleNames.Admin, RoleNames.User })
     {
@@ -223,8 +226,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-await SeedAdmin.SeedAdminAsync(app);
-
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -234,6 +235,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    await SeedAdmin.SeedAdminAsync(app);
 
     app.UseHangfireDashboard("/hangfire", new DashboardOptions
     {

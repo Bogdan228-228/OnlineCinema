@@ -76,6 +76,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(new { message = "Category deleted successfully" });
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategoryById(int id)
         {
@@ -90,6 +91,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllCategories()
         {
@@ -102,6 +104,7 @@ namespace OnlineCinema.API.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("get-by-name")]
         public async Task<IActionResult> GetCategoryByName(string name)
         {
