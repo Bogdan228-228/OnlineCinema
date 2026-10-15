@@ -38,7 +38,7 @@ namespace OnlineCinema.API.Controllers
             if (favorite == null)
                 return BadRequest("Favorite already exists or could not be created.");
 
-            await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.Id.ToString(), EntityType.Favorite, ActionType.Post, weight: 3.0);
+            await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.ContentId.ToString(), EntityType.Movie, ActionType.Favorite, weight: 3.0);
 
             var response = new DTOs.FavoriteResponse(favorite.Id);
 
@@ -53,7 +53,7 @@ namespace OnlineCinema.API.Controllers
             if (favorite == null)
                 return NotFound("Favorite not found.");
 
-            await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.Id.ToString(), EntityType.Favorite, ActionType.Delete, weight: -3.0);
+            await _userActivityService.DeleteActivityAsync(GetCurrentUserId(), favorite.ContentId.ToString(), EntityType.Movie, ActionType.Favorite);
 
             var response = new FavoriteResponse 
             { 

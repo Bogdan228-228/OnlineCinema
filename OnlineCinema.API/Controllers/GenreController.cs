@@ -71,15 +71,15 @@ namespace OnlineCinema.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteActor(int id)
+        public async Task<IActionResult> DeleteGenre(int id)
         {
             var result = await _genreService.DeleteGenreAsync(id);
             if (!result)
-                return NotFound(new { message = "Actor not found" });
+                return NotFound(new { message = "Genre not found" });
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), id.ToString(), EntityType.Genre, ActionType.Delete);
 
-            return Ok(new { message = "Actor deleted successfully" });
+            return Ok(new { message = "Genre deleted successfully" });
         }
 
         [Authorize]

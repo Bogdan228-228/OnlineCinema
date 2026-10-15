@@ -44,7 +44,8 @@ namespace OnlineCinema.API.Controllers
             var response = new ActorResponse(
                 actor.Id,
                 actor.FullName,
-                actor.Biography
+                actor.Biography,
+                actor.ImageUrl
             );
 
             return Ok(response);
@@ -57,10 +58,11 @@ namespace OnlineCinema.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Файл не завантажено");
 
-            var actor = await _actorUploadService.UploadActorImageAsync(id, file);
-
-            if (actor == null)
+            var existing = await _actorService.GetActorByIdAsync(id);
+            if (existing == null)
                 return NotFound(new { message = "Actor not found" });
+
+            var actor = await _actorUploadService.UploadActorImageAsync(id, file);
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), actor.Id.ToString(), EntityType.Actor, ActionType.Patch, metadata: "Image uploaded");
 
@@ -83,7 +85,8 @@ namespace OnlineCinema.API.Controllers
             var response = new ActorResponse(
                 actor.Id,
                 actor.FullName,
-                actor.Biography
+                actor.Biography,
+                actor.ImageUrl
             );
 
             return Ok(response);
@@ -117,7 +120,8 @@ namespace OnlineCinema.API.Controllers
             var response = new ActorResponse(
                 actor.Id,
                 actor.FullName,
-                actor.Biography
+                actor.Biography,
+                actor.ImageUrl
             );
 
             return Ok(response);
@@ -134,7 +138,8 @@ namespace OnlineCinema.API.Controllers
             var response = actors.Select(a => new ActorResponse(
                 a.Id,
                 a.FullName,
-                a.Biography
+                a.Biography,
+                a.ImageUrl
             ));
 
             return Ok(response);
@@ -151,7 +156,8 @@ namespace OnlineCinema.API.Controllers
             var response = actors.Select(a => new ActorResponse(
                 a.Id,
                 a.FullName,
-                a.Biography
+                a.Biography,
+                a.ImageUrl
             ));
 
             return Ok(response);
