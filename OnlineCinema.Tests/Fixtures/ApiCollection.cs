@@ -1,4 +1,6 @@
-﻿namespace OnlineCinema.Tests.Fixtures
+﻿using Xunit;
+
+namespace OnlineCinema.Tests.Fixtures
 {
     [CollectionDefinition("Api")]
     public class ApiCollection : ICollectionFixture<CinemaWebApplicationFactory> { }

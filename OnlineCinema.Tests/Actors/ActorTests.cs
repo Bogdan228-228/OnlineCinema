@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OnlineCinema.Tests.Fakes;
 using OnlineCinema.Tests.Fixtures;
 using OnlineCinema.Tests.Helpers;
+using Xunit;
 
 namespace OnlineCinema.Tests.Actors;
 

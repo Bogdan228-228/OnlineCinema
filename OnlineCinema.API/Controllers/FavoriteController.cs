@@ -40,7 +40,7 @@ namespace OnlineCinema.API.Controllers
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), favorite.ContentId.ToString(), EntityType.Movie, ActionType.Favorite, weight: 3.0);
 
-            var response = new DTOs.FavoriteResponse(favorite.Id);
+            var response = new DTOs.FavoriteResponse(favorite.Id, favorite.ContentId);
 
             return Ok(response);
         }
@@ -49,7 +49,7 @@ namespace OnlineCinema.API.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> RemoveFavorite(Guid id)
         {
-            var favorite = await _favoriteService.RemoveAsync(GetCurrentUserId(), id);
+            var favorite = await _favoriteService.RemoveAsync(GetCurrentUserId(), id.ToString());
             if (favorite == null)
                 return NotFound("Favorite not found.");
 
