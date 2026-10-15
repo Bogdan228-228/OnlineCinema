@@ -2,6 +2,7 @@
 using OnlineCinema.Domain.Enums;
 using OnlineCinema.Tests.Fixtures;
 using OnlineCinema.Tests.Helpers;
+using Xunit;
 
 namespace OnlineCinema.Tests.Recommendations;
 

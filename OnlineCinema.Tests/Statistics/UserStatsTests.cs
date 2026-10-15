@@ -4,6 +4,7 @@ using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
 using OnlineCinema.Tests.Fixtures;
 using OnlineCinema.Tests.Helpers;
+using Xunit;
 
 namespace OnlineCinema.Tests.Statistics;
 

@@ -1,4 +1,5 @@
 ﻿using OnlineCinema.Tests.Fixtures;
+using Xunit;
 
 namespace OnlineCinema.Tests.Helpers
 {

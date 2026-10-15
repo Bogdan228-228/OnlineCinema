@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using OnlineCinema.Tests.Fixtures;
 using OnlineCinema.Tests.Helpers;
+using Xunit;
 
 namespace OnlineCinema.Tests.Actors;
 

@@ -11,6 +11,7 @@ namespace OnlineCinema.API.DTOs
     );
 
     public record FavoriteResponse(
-        Guid Id
+        Guid Id,
+        string ContentId
     );
 }

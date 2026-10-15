@@ -54,6 +54,22 @@ public class FavoriteService : IFavoriteService
         return MapToResponse(favorite);
     }
 
+    public async Task<FavoriteResponse> RemoveAsync(Guid userId, string contentId)
+    {
+        var favorite = await _dbContext.Favorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.MovieId == Guid.Parse(contentId));
+
+        if (favorite == null)
+        {
+            throw new NotFoundException("Запис в обраному не знайдено");
+        }
+
+        _dbContext.Favorites.Remove(favorite);
+        await _dbContext.SaveChangesAsync();
+
+        return MapToResponse(favorite);
+    }
+
     public async Task<IReadOnlyList<FavoriteResponse>> GetAllAsync(Guid userId)
     {
         var favorites = await _dbContext.Favorites
@@ -64,10 +80,10 @@ public class FavoriteService : IFavoriteService
         return favorites.Select(MapToResponse).ToList();
     }
 
-    public async Task<bool> IsFavoriteAsync(Guid userId, Guid contentId)
+    public async Task<bool> IsFavoriteAsync(Guid userId, string contentId)
     {
         return await _dbContext.Favorites
-            .AnyAsync(f => f.UserId == userId && f.MovieId == contentId);
+            .AnyAsync(f => f.UserId == userId && f.MovieId == Guid.Parse(contentId));
     }
 
     private static FavoriteResponse MapToResponse(Favorite favorite)
@@ -75,7 +91,7 @@ public class FavoriteService : IFavoriteService
         return new FavoriteResponse
         {
             Id = favorite.Id,
-            ContentId = favorite.MovieId,
+            ContentId = favorite.ContentId ?? favorite.MovieId?.ToString() ?? string.Empty,
             CreatedAt = favorite.CreatedAt
         };
     }

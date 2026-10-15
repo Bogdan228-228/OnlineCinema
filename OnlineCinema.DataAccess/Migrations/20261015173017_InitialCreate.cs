@@ -496,7 +496,8 @@ namespace OnlineCinema.DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MovieId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MovieId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ContentId = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -667,9 +668,9 @@ namespace OnlineCinema.DataAccess.Migrations
                 column: "MovieId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_UserId",
+                name: "IX_Favorites_UserId_ContentId",
                 table: "Favorites",
-                column: "UserId");
+                columns: new[] { "UserId", "ContentId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_GenreMovie_MoviesId",

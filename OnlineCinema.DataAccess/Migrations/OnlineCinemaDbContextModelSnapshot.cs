@@ -310,10 +310,13 @@ namespace OnlineCinema.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ContentId")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("MovieId")
+                    b.Property<Guid?>("MovieId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
@@ -323,7 +326,7 @@ namespace OnlineCinema.DataAccess.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "ContentId");
 
                     b.ToTable("Favorites");
                 });
@@ -1004,8 +1007,7 @@ namespace OnlineCinema.DataAccess.Migrations
                     b.HasOne("OnlineCinema.Domain.Models.Movie", "Movie")
                         .WithMany("Favorites")
                         .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("OnlineCinema.Domain.Models.User", "User")
                         .WithMany("Favorites")

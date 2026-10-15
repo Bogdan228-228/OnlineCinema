@@ -10,6 +10,8 @@ using Testcontainers.Redis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Tests.Fakes;
+using Xunit;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 namespace OnlineCinema.Tests.Fixtures;
 
