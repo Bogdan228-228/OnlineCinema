@@ -1,6 +1,4 @@
-﻿using OnlineCinema.Tests.Fixtures;
-
-namespace Tests.Fixtures
+﻿namespace OnlineCinema.Tests.Fixtures
 {
     [CollectionDefinition("Api")]
     public class ApiCollection : ICollectionFixture<CinemaWebApplicationFactory> { }
