@@ -21,6 +21,7 @@ namespace OnlineCinema.API.DTOs
     public record ActorResponse(
         Guid Id,
         string FullName,
-        string Biography
+        string Biography,
+        string? ImageUrl = ""
     );
 }

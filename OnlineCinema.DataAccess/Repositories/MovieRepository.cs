@@ -115,7 +115,7 @@ namespace OnlineCinema.DataAccess.Repositories
                 .Include(m => m.Actors)
                 .Include(m => m.AudioTracks)
                 .Include(m => m.Platforms)
-                .FirstOrDefaultAsync(m => m.Title.Contains(title));
+                .FirstOrDefaultAsync(m => EF.Functions.ILike(m.Title, $"%{title}%"));
         }
 
         public async Task<List<Movie>> GetMoviesByActorAsync(Guid actorId)
@@ -186,7 +186,7 @@ namespace OnlineCinema.DataAccess.Repositories
                 .Include(m => m.Actors)
                 .Include(m => m.AudioTracks)
                 .Include(m => m.Platforms)
-                .Where(m => m.AudioTracks.Any(at => at.Language.Contains(language)))
+                .Where(m => m.AudioTracks.Any(at => EF.Functions.ILike(at.Language, $"%{language}%")))
                 .ToListAsync();
         }
 
@@ -198,19 +198,7 @@ namespace OnlineCinema.DataAccess.Repositories
                 .Include(m => m.Actors)
                 .Include(m => m.AudioTracks)
                 .Include(m => m.Platforms)
-                .Where(m => m.Country.Contains(country))
-                .ToListAsync();
-        }
-
-        public async Task<List<Movie>> GetMoviesByActorIdAsync(Guid actorId)
-        {
-            return await _db.Movies
-                .Include(m => m.Category)
-                .Include(m => m.Genres)
-                .Include(m => m.Actors)
-                .Include(m => m.AudioTracks)
-                .Include(m => m.Platforms)
-                .Where(m => m.Actors.Any(a => a.Id == actorId))
+                .Where(m => EF.Functions.ILike(m.Country, $"%{country}%"))
                 .ToListAsync();
         }
     }

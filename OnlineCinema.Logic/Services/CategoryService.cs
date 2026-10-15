@@ -1,6 +1,8 @@
-﻿using OnlineCinema.Domain.Abstractions.Repositories;
+﻿using Microsoft.EntityFrameworkCore;
+using OnlineCinema.Domain.Abstractions.Repositories;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Models;
+using OnlineCinema.Logic.Exceptions;
 
 namespace OnlineCinema.Logic.Services
 {
@@ -36,11 +38,16 @@ namespace OnlineCinema.Logic.Services
         public async Task<bool> DeleteCategoryAsync(int categoryId)
         {
             var category = await _categoryRepository.GetCategoryByIdAsync(categoryId);
-            if (category == null)
+            if (category == null) return false;
+
+            try
             {
-                return false;
+                return await _categoryRepository.DeleteCategoryAsync(category.Id);
             }
-            return await _categoryRepository.DeleteCategoryAsync(category.Id);
+            catch (DbUpdateException)
+            {
+                throw new ConflictException("Неможливо видалити категорію, до якої прив'язані фільми");
+            }
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int categoryId)

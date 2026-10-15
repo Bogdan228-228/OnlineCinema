@@ -4,6 +4,7 @@ using OnlineCinema.API.DTOs;
 using OnlineCinema.Domain.Abstractions.Services;
 using OnlineCinema.Domain.Enums;
 using OnlineCinema.Domain.Models;
+using OnlineCinema.Logic.Services;
 
 namespace OnlineCinema.API.Controllers
 {
@@ -80,10 +81,11 @@ namespace OnlineCinema.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Файл не завантажено");
 
-            var movie = await _movieUploadService.UploadAndSliceVideoAsync(id, file);
-
-            if (movie == null)
+            var existing = await _movieService.GetMovieByIdAsync(id);
+            if (existing == null)
                 return NotFound(new { message = "Movie not found" });
+
+            var movie = await _movieUploadService.UploadAndSliceVideoAsync(id, file);
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Video uploaded");
 
@@ -97,10 +99,11 @@ namespace OnlineCinema.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Файл не завантажено");
 
-            var movie = await _movieUploadService.UploadPosterAsync(id, file);
-
-            if (movie == null)
+            var existing = await _movieService.GetMovieByIdAsync(id);
+            if (existing == null)
                 return NotFound(new { message = "Movie not found" });
+
+            var movie = await _movieUploadService.UploadPosterAsync(id, file);
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Poster uploaded");
             
@@ -116,10 +119,11 @@ namespace OnlineCinema.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Файл не завантажено");
 
-            var movie = await _movieUploadService.UploadTrailerAsync(id, file);
-
-            if (movie == null)
+            var existing = await _movieService.GetMovieByIdAsync(id);
+            if (existing == null)
                 return NotFound(new { message = "Movie not found" });
+
+            var movie = await _movieUploadService.UploadTrailerAsync(id, file);
 
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), movie.Id.ToString(), EntityType.Movie, ActionType.Patch, metadata: "Trailer uploaded");
 
@@ -130,7 +134,7 @@ namespace OnlineCinema.API.Controllers
         [HttpPatch("like/{id}")]
         public async Task<IActionResult> LikeMovie(Guid id)
         {
-            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var userId = GetCurrentUserId();
             var movie = await _movieService.LikeMovieAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
@@ -141,7 +145,7 @@ namespace OnlineCinema.API.Controllers
         [HttpPatch("remove-like/{id}")]
         public async Task<IActionResult> RemoveLike(Guid id)
         {
-            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var userId = GetCurrentUserId();
             var movie = await _movieService.RemoveLikeAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
@@ -153,7 +157,7 @@ namespace OnlineCinema.API.Controllers
         [HttpPatch("dislike/{id}")]
         public async Task<IActionResult> DislikeMovie(Guid id)
         {
-            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var userId = GetCurrentUserId();
             var movie = await _movieService.DislikeMovieAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
@@ -164,7 +168,7 @@ namespace OnlineCinema.API.Controllers
         [HttpPatch("remove-dislike/{id}")]
         public async Task<IActionResult> RemoveDislike(Guid id)
         {
-            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var userId = GetCurrentUserId();
             var movie = await _movieService.RemoveDislikeAsync(userId, id);
             if (movie == null) return NotFound(new { message = "Movie not found" });
 
@@ -196,12 +200,14 @@ namespace OnlineCinema.API.Controllers
 
             string sasQuery = GenerateSasToken.GetSasUri(blobConnectionString, "private-media");
 
-            movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
-            movie.TrailerUrl = $"{movie.TrailerUrl}{sasQuery}";
-            foreach (var (key, value) in movie.SubtitleUrls)
-            {
-                movie.SubtitleUrls[key] = $"{value}{sasQuery}";
-            }
+            if (!string.IsNullOrEmpty(movie.VideoUrl))
+                movie.VideoUrl = $"{movie.VideoUrl}{sasQuery}";
+
+            if (!string.IsNullOrEmpty(movie.TrailerUrl))
+                movie.TrailerUrl = $"{movie.TrailerUrl}{sasQuery}";
+
+            foreach (var key in movie.SubtitleUrls.Keys.ToList())
+                movie.SubtitleUrls[key] = $"{movie.SubtitleUrls[key]}{sasQuery}";
 
             return Ok(MapMovie(movie));
         }
@@ -284,7 +290,6 @@ namespace OnlineCinema.API.Controllers
         public async Task<IActionResult> GetMoviesByActor(Guid id)
         {
             var movies = await _movieService.GetMoviesByActorAsync(id);
-            if (movies == null || !movies.Any()) return NotFound(new { message = "Movie not found" });
             await _userActivityService.AddActivityAsync(GetCurrentUserId(), "", EntityType.Movie, ActionType.Search);
             return Ok(movies.Select(MapMovie));
         }
